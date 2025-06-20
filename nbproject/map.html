@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Hotel</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+     
+    <style>
+        /* CSS untuk memastikan peta mengisi seluruh jendela */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 100%; /* Peta akan setinggi jendela aplikasi */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        // Inisialisasi peta dan mengatur tampilan awal
+        // Koordinat ini saya atur ke kota Salatiga. Anda bisa mengubahnya.
+        // Formatnya adalah [latitude, longitude], dan angka 13 adalah tingkat zoom.
+        var map = L.map('map').setView([-7.3305, 110.5022], 13);
+
+        // Menambahkan layer peta dari OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // (Opsional) Menambahkan penanda (marker) di lokasi tertentu
+        var marker = L.marker([-7.3305, 110.5022]).addTo(map);
+        
+        // (Opsional) Menambahkan pop-up pada penanda
+        marker.bindPopup("<b>Halo dari Salatiga!</b><br>Ini adalah penanda.").openPopup();
+
+    </script>
+
+</body>
+</html>

@@ -1,78 +1,58 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
-package view;
 
-import db.Koneksi;
+package view;
+import controller.ReservasiController;
 import java.awt.Color;
 import java.awt.Font;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import model.Pemesanan;
 
 public class DataReservasiForm extends javax.swing.JFrame {
 
-    private void load_table() {
-    DefaultTableModel model = new DefaultTableModel();
-    model.addColumn("ID");
-    model.addColumn("Nama Tamu");
-    model.addColumn("No. Kamar");
-    model.addColumn("Tipe Kamar");
-    model.addColumn("Check-in");
-    model.addColumn("Check-out");
-    model.addColumn("Status");
+    private final ReservasiController controller;
+    
+    public DataReservasiForm() {
+        initComponents();
+        this.controller = new ReservasiController();
+        
+        tabelReservasi.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabelReservasi.getTableHeader().setBackground(new Color(0, 51, 102));
+        tabelReservasi.getTableHeader().setForeground(new Color(255, 255, 255));
 
-    try {
-        String sql = "SELECT p.id, u.nama_lengkap, k.nomor_kamar, tk.nama_tipe, p.tanggal_checkin, p.tanggal_checkout, p.status_pemesanan "
-                   + "FROM pemesanan p "
-                   + "JOIN users u ON p.id_user = u.id "
-                   + "JOIN kamar k ON p.id_kamar = k.id "
-                   + "JOIN tipe_kamar tk ON k.id_tipe_kamar = tk.id "
-                   + "ORDER BY p.id DESC";
+        comboUpdateStatus.removeAllItems();
+        comboUpdateStatus.addItem("Terkonfirmasi");
+        comboUpdateStatus.addItem("Selesai");
+        comboUpdateStatus.addItem("Dibatalkan");
         
-        Connection conn = (Connection) Koneksi.configDB();
-        Statement stm = conn.createStatement();
-        ResultSet res = stm.executeQuery(sql);
-        
-        while (res.next()) {
+        load_table();
+        panelAksi.setVisible(false);
+    }
+
+    private void load_table() {
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("ID");
+        model.addColumn("Nama Tamu");
+        model.addColumn("No. Kamar");
+        model.addColumn("Tipe Kamar");
+        model.addColumn("Check-in");
+        model.addColumn("Check-out");
+        model.addColumn("Status");
+
+        List<Pemesanan> listPemesanan = controller.getAllReservasi();
+        for (Pemesanan p : listPemesanan) {
             model.addRow(new Object[]{
-                res.getString("p.id"),
-                res.getString("u.nama_lengkap"),
-                res.getString("k.nomor_kamar"),
-                res.getString("tk.nama_tipe"),
-                res.getString("p.tanggal_checkin"),
-                res.getString("p.tanggal_checkout"),
-                res.getString("p.status_pemesanan")
+                p.getId(),
+                p.getUser().getNamaLengkap(),
+                p.getKamar().getNomorKamar(),
+                p.getKamar().getTipeKamar().getNamaTipe(),
+                p.getTanggalCheckin().toString(),
+                p.getTanggalCheckout().toString(),
+                p.getStatusPemesanan()
             });
         }
         tabelReservasi.setModel(model);
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal memuat tabel reservasi: " + e.getMessage());
     }
-}
-    public DataReservasiForm() {
-        initComponents();
-        tabelReservasi.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-    tabelReservasi.getTableHeader().setBackground(new Color(0, 51, 102));
-    tabelReservasi.getTableHeader().setForeground(new Color(255, 255, 255));
-    
-    // Mengisi pilihan status
-    comboUpdateStatus.removeAllItems();
-    comboUpdateStatus.addItem("Terkonfirmasi");
-    comboUpdateStatus.addItem("Selesai");
-    comboUpdateStatus.addItem("Dibatalkan");
-    
-    // Memuat data awal
-    load_table();
-    
-    // Nonaktifkan panel aksi di awal
-    panelAksi.setVisible(false);
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -227,70 +207,53 @@ public class DataReservasiForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tabelReservasiMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelReservasiMouseClicked
-        panelAksi.setVisible(true); // Tampilkan panel aksi
+   panelAksi.setVisible(true);
     
-    int baris = tabelReservasi.rowAtPoint(evt.getPoint());
-    String idReservasi = tabelReservasi.getValueAt(baris, 0).toString();
-    String statusSaatIni = tabelReservasi.getValueAt(baris, 6).toString();
-    
-    lblDetailId.setText(idReservasi); // Tampilkan ID di label
-    comboUpdateStatus.setSelectedItem(statusSaatIni);
+        int baris = tabelReservasi.rowAtPoint(evt.getPoint());
+        String idReservasi = tabelReservasi.getValueAt(baris, 0).toString();
+        String statusSaatIni = tabelReservasi.getValueAt(baris, 6).toString();
+        
+        lblDetailId.setText(idReservasi);
+        comboUpdateStatus.setSelectedItem(statusSaatIni);
     }//GEN-LAST:event_tabelReservasiMouseClicked
 
     private void btnUpdateStatusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateStatusActionPerformed
-        String idReservasi = lblDetailId.getText();
-    if(idReservasi.isEmpty()){
-        JOptionPane.showMessageDialog(this, "Silakan pilih data reservasi dari tabel terlebih dahulu.");
-        return;
-    }
+       String idText = lblDetailId.getText();
+        if(idText.isEmpty() || idText.equals("(ID)")){
+            JOptionPane.showMessageDialog(this, "Silakan pilih data reservasi dari tabel.");
+            return;
+        }
     
-    try {
+        int idReservasi = Integer.parseInt(idText);
         String statusBaru = comboUpdateStatus.getSelectedItem().toString();
         int confirm = JOptionPane.showConfirmDialog(this, "Ubah status reservasi ID " + idReservasi + " menjadi '" + statusBaru + "'?", "Konfirmasi Update", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            String sql = "UPDATE pemesanan SET status_pemesanan = ? WHERE id = ?";
-            Connection conn = (Connection) Koneksi.configDB();
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, statusBaru);
-            pst.setString(2, idReservasi);
-            pst.executeUpdate();
-            
-            JOptionPane.showMessageDialog(this, "Status reservasi berhasil diupdate.");
-            load_table(); // Muat ulang tabel
-            panelAksi.setVisible(false); // Sembunyikan lagi panel aksi
+            if(controller.updateStatus(idReservasi, statusBaru)){
+                JOptionPane.showMessageDialog(this, "Status reservasi berhasil diupdate.");
+                load_table();
+                panelAksi.setVisible(false);
+            }
         }
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal mengupdate status: " + e.getMessage());
-    }
     }//GEN-LAST:event_btnUpdateStatusActionPerformed
 
     private void btnHapusReservasiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusReservasiActionPerformed
-        String idReservasi = lblDetailId.getText();
-    if(idReservasi.isEmpty()){
-        JOptionPane.showMessageDialog(this, "Silakan pilih data reservasi dari tabel terlebih dahulu.");
-        return;
-    }
-    
-    try {
-        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data reservasi ID " + idReservasi + "?\n(Aksi ini tidak bisa dibatalkan)", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+        String idText = lblDetailId.getText();
+        if(idText.isEmpty() || idText.equals("(ID)")){
+            JOptionPane.showMessageDialog(this, "Silakan pilih data reservasi dari tabel.");
+            return;
+        }
+        
+        int idReservasi = Integer.parseInt(idText);
+        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data reservasi ID " + idReservasi + "?\n(Status kamar terkait akan dikembalikan ke 'Tersedia')", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // Catatan: Sebaiknya status kamar dikembalikan ke 'Tersedia' sebelum menghapus
-            // Namun untuk penyederhanaan, kita langsung hapus.
-            String sql = "DELETE FROM pemesanan WHERE id = ?";
-            Connection conn = (Connection) Koneksi.configDB();
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, idReservasi);
-            pst.executeUpdate();
-            
-            JOptionPane.showMessageDialog(this, "Data reservasi berhasil dihapus.");
-            load_table();
-            panelAksi.setVisible(false);
+            if(controller.deleteReservasi(idReservasi)){
+                JOptionPane.showMessageDialog(this, "Data reservasi berhasil dihapus.");
+                load_table();
+                panelAksi.setVisible(false);
+            }
         }
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal menghapus reservasi: " + e.getMessage());
-    }
     }//GEN-LAST:event_btnHapusReservasiActionPerformed
 
     /**

@@ -4,82 +4,69 @@
  */
 package view;
 
-import db.Koneksi;
+import controller.KamarController;
 import java.awt.Color;
 import java.awt.Font;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import model.Kamar;
 
 public class ManajemenKamarForm extends javax.swing.JFrame {
 
-    
+    private final KamarController controller;
+    private Map<String, Integer> tipeKamarMap; // Untuk menyimpan map Nama Tipe -> ID
+
     public ManajemenKamarForm() {
         initComponents();
-        tabelKamar.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14)); // BENAR
-        tabelKamar.getTableHeader().setBackground(new Color(0, 51, 102));    // BENAR
-        tabelKamar.getTableHeader().setForeground(new Color(255, 255, 255));  // BENAR
+        this.controller = new KamarController();
+        
+        // Pengaturan UI
+        tabelKamar.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabelKamar.getTableHeader().setBackground(new Color(0, 51, 102));
+        tabelKamar.getTableHeader().setForeground(new Color(255, 255, 255));
     
-        load_table();
+        // Inisialisasi data
         load_tipe_kamar();
-    
-        comboStatus.removeAllItems();
-        comboStatus.addItem("Tersedia");
-        comboStatus.addItem("Dipesan");
-        comboStatus.addItem("Perbaikan");
+        load_table();
         clear_form();
-       
     }
-    private void load_table() {
-    DefaultTableModel model = new DefaultTableModel();
-    model.addColumn("ID");
-    model.addColumn("No. Kamar");
-    model.addColumn("Tipe Kamar");
-    model.addColumn("Status");
 
-    try {
-        String sql = "SELECT kamar.id, kamar.nomor_kamar, tipe_kamar.nama_tipe, kamar.status "
-                   + "FROM kamar JOIN tipe_kamar ON kamar.id_tipe_kamar = tipe_kamar.id ORDER BY kamar.id ASC";
-        Connection conn = (Connection) Koneksi.configDB();
-        Statement stm = conn.createStatement();
-        ResultSet res = stm.executeQuery(sql);
-        while (res.next()) {
+    private void load_table() {
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("No. Kamar");
+        model.addColumn("Tipe Kamar");
+        model.addColumn("Status");
+
+        List<Kamar> kamarList = controller.getAllKamar();
+        for (Kamar kamar : kamarList) {
             model.addRow(new Object[]{
-                res.getString(1), res.getString(2), res.getString(3), res.getString(4)
+                kamar.getNomorKamar(),
+                kamar.getTipeKamar().getNamaTipe(), // Ambil nama tipe dari objek join
+                kamar.getStatus()
             });
         }
         tabelKamar.setModel(model);
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal memuat tabel: " + e.getMessage());
     }
-}
 
-// Method untuk Mengisi Pilihan Tipe Kamar
-private void load_tipe_kamar() {
-    try {
+    private void load_tipe_kamar() {
+        tipeKamarMap = controller.getTipeKamarMap();
         comboTipeKamar.removeAllItems();
-        String sql = "SELECT * FROM tipe_kamar";
-        Connection conn = (Connection) Koneksi.configDB();
-        Statement stm = conn.createStatement();
-        ResultSet res = stm.executeQuery(sql);
-        while (res.next()) {
-            comboTipeKamar.addItem(res.getString("nama_tipe"));
+        for (String namaTipe : tipeKamarMap.keySet()) {
+            comboTipeKamar.addItem(namaTipe);
         }
-    } catch (Exception e) {
-         JOptionPane.showMessageDialog(this, "Gagal memuat tipe kamar: " + e.getMessage());
     }
-}
 
-// Method untuk Membersihkan Form
-private void clear_form() {
-    txtNomorKamar.setText("");
-    comboTipeKamar.setSelectedIndex(0);
-    comboStatus.setSelectedIndex(0);
-    lblIdKamar.setText(""); // Kosongkan ID
-}
+    private void clear_form() {
+        txtNomorKamar.setText("");
+        if (comboTipeKamar.getItemCount() > 0) {
+            comboTipeKamar.setSelectedIndex(0);
+        }
+        comboStatus.setSelectedIndex(0);
+        txtNomorKamar.setEditable(true);
+        lblIdKamar.setVisible(false);
+    }
 
 
 
@@ -305,80 +292,49 @@ private void clear_form() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
-         try {
-        String namaTipeKamar = comboTipeKamar.getSelectedItem().toString();
-        String sql_get_id = "SELECT id FROM tipe_kamar WHERE nama_tipe = ?";
-        Connection conn = (Connection) Koneksi.configDB();
-        PreparedStatement pst_get_id = conn.prepareStatement(sql_get_id);
-        pst_get_id.setString(1, namaTipeKamar);
-        ResultSet rs_id = pst_get_id.executeQuery();
+        String namaTipePilihan = comboTipeKamar.getSelectedItem().toString();
+        int idTipeKamar = tipeKamarMap.get(namaTipePilihan);
         
-        int idTipeKamar = 0;
-        if (rs_id.next()) {
-            idTipeKamar = rs_id.getInt("id");
-        }
+        Kamar kamar = new Kamar();
+        kamar.setNomorKamar(txtNomorKamar.getText());
+        kamar.setIdTipeKamar(idTipeKamar);
+        kamar.setStatus(comboStatus.getSelectedItem().toString());
 
-        String sql_insert = "INSERT INTO kamar (nomor_kamar, id_tipe_kamar, status) VALUES (?, ?, ?)";
-        PreparedStatement pst_insert = conn.prepareStatement(sql_insert);
-        pst_insert.setString(1, txtNomorKamar.getText());
-        pst_insert.setInt(2, idTipeKamar);
-        pst_insert.setString(3, comboStatus.getSelectedItem().toString());
-        pst_insert.execute();
-        
-        JOptionPane.showMessageDialog(null, "Data Berhasil Disimpan");
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal menyimpan data: " + e.getMessage());
-    }
-    load_table();
-    clear_form();
+        if (controller.saveKamar(kamar)) {
+            JOptionPane.showMessageDialog(null, "Data Kamar Berhasil Disimpan");
+            load_table();
+            clear_form();
+        }
     }//GEN-LAST:event_btnSimpanActionPerformed
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
-        try {
-        String namaTipeKamar = comboTipeKamar.getSelectedItem().toString();
-        String sql_get_id = "SELECT id FROM tipe_kamar WHERE nama_tipe = ?";
-        Connection conn = (Connection) Koneksi.configDB();
-        PreparedStatement pst_get_id = conn.prepareStatement(sql_get_id);
-        pst_get_id.setString(1, namaTipeKamar);
-        ResultSet rs_id = pst_get_id.executeQuery();
+        String namaTipePilihan = comboTipeKamar.getSelectedItem().toString();
+        int idTipeKamar = tipeKamarMap.get(namaTipePilihan);
         
-        int idTipeKamar = 0;
-        if (rs_id.next()) {
-            idTipeKamar = rs_id.getInt("id");
-        }
+        Kamar kamar = new Kamar();
+        kamar.setNomorKamar(txtNomorKamar.getText());
+        kamar.setIdTipeKamar(idTipeKamar);
+        kamar.setStatus(comboStatus.getSelectedItem().toString());
 
-        String sql_update = "UPDATE kamar SET nomor_kamar = ?, id_tipe_kamar = ?, status = ? WHERE id = ?";
-        PreparedStatement pst_update = conn.prepareStatement(sql_update);
-        pst_update.setString(1, txtNomorKamar.getText());
-        pst_update.setInt(2, idTipeKamar);
-        pst_update.setString(3, comboStatus.getSelectedItem().toString());
-        pst_update.setString(4, lblIdKamar.getText());
-        pst_update.executeUpdate();
-        
-        JOptionPane.showMessageDialog(null, "Data Berhasil Diedit");
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal mengedit data: " + e.getMessage());
-    }
-    load_table();
-    clear_form();
+        if (controller.updateKamar(kamar)) {
+            JOptionPane.showMessageDialog(null, "Data Berhasil Diedit");
+            load_table();
+            clear_form();
+        }
     }//GEN-LAST:event_btnEditActionPerformed
 
     private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
-        try {
-        int confirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+        String nomorKamar = txtNomorKamar.getText();
+        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus kamar nomor " + nomorKamar + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+        
         if (confirm == JOptionPane.YES_OPTION) {
-            String sql = "DELETE FROM kamar WHERE id = ?";
-            Connection conn = (Connection) Koneksi.configDB();
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, lblIdKamar.getText());
-            pst.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Data Berhasil Dihapus");
+            if (controller.deleteKamar(nomorKamar)) {
+                JOptionPane.showMessageDialog(null, "Data Berhasil Dihapus");
+                load_table();
+                clear_form();
+            }
         }
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal menghapus data: " + e.getMessage());
-    }
-    load_table();
-    clear_form();
+    
     }//GEN-LAST:event_btnHapusActionPerformed
 
     private void btnBersihActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBersihActionPerformed
@@ -386,15 +342,18 @@ private void clear_form() {
     }//GEN-LAST:event_btnBersihActionPerformed
 
     private void tabelKamarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelKamarMouseClicked
-    int baris = tabelKamar.rowAtPoint(evt.getPoint()); // BENAR
-    String id = tabelKamar.getValueAt(baris, 0).toString(); // BENAR
-    lblIdKamar.setText(id);
-    String nomor = tabelKamar.getValueAt(baris, 1).toString(); // BENAR
-    txtNomorKamar.setText(nomor);
-    String tipe = tabelKamar.getValueAt(baris, 2).toString(); // BENAR
-    comboTipeKamar.setSelectedItem(tipe);
-    String status = tabelKamar.getValueAt(baris, 3).toString(); // BENAR
-    comboStatus.setSelectedItem(status);
+   int baris = tabelKamar.rowAtPoint(evt.getPoint());
+        String nomor = tabelKamar.getValueAt(baris, 0).toString();
+        String tipe = tabelKamar.getValueAt(baris, 1).toString();
+        String status = tabelKamar.getValueAt(baris, 2).toString();
+
+        // Masukkan data ke form
+        txtNomorKamar.setText(nomor);
+        comboTipeKamar.setSelectedItem(tipe);
+        comboStatus.setSelectedItem(status);
+        
+        // Buat nomor kamar tidak bisa diedit saat mode edit
+        txtNomorKamar.setEditable(false);
 
     }//GEN-LAST:event_tabelKamarMouseClicked
 
@@ -426,6 +385,23 @@ private void clear_form() {
         //</editor-fold>
 
         /* Create and display the form */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(ManajemenKamarForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(ManajemenKamarForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(ManajemenKamarForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(ManajemenKamarForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new ManajemenKamarForm().setVisible(true);

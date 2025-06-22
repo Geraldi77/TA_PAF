@@ -9,25 +9,31 @@ import java.awt.BorderLayout;
 import java.awt.Image;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import java.sql.PreparedStatement;
 
 public class UserDashboardForm extends javax.swing.JFrame {
+    
+    private model.User currentUser;
 
-    public UserDashboardForm() {
+    public UserDashboardForm(model.User user) {
         initComponents();
+        this.currentUser = user;
+        this.setTitle("Selamat Datang, " + this.currentUser.getNamaLengkap());
+        setLocationRelativeTo(null); // Form di tengah layar
+        
         loadTipeKamarFilter();
-        // Query default sudah diperbaiki untuk mengambil gambar
-        String queryDefault = "SELECT k.id, tk.nama_tipe, tk.fasilitas, tk.harga, tk.gambar " +
-                          "FROM kamar k JOIN tipe_kamar tk ON k.id_tipe_kamar = tk.id " +
-                          "WHERE k.status = 'Tersedia'";
-        tampilkanKamar(queryDefault);
+        // Trigger pencarian awal untuk menampilkan semua kamar tersedia
+        btnCari.doClick(); 
     }
     
-    // Method bantuan untuk menampilkan gambar di JLabel
     private void setImageToLabel(String namaFileGambar, javax.swing.JLabel label) {
         if (namaFileGambar == null || namaFileGambar.isEmpty()) {
             label.setText("Gambar Tidak Tersedia");
@@ -35,25 +41,20 @@ public class UserDashboardForm extends javax.swing.JFrame {
             return;
         }
         try {
-            // Mengambil gambar dari folder eksternal 'app_images'
             String pathGambar = System.getProperty("user.dir") + "/app_images/" + namaFileGambar;
             java.io.File fileGambar = new java.io.File(pathGambar);
 
             if (fileGambar.exists()) {
                 ImageIcon icon = new ImageIcon(fileGambar.getAbsolutePath());
-                // Mengubah ukuran gambar agar pas dengan JLabel
-                // Penting: agar getWidth() dan getHeight() tidak 0, pastikan label sudah punya ukuran.
-                // Jika masih 0, kita beri ukuran default.
-                int width = label.getWidth() == 0 ? 250 : label.getWidth();
-                int height = label.getHeight() == 0 ? 180 : label.getHeight();
+                int width = 250;
+                int height = 180;
                 Image img = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
                 
                 label.setIcon(new ImageIcon(img));
-                label.setText(""); // Hapus teks jika gambar berhasil dimuat
+                label.setText("");
             } else {
                 label.setText("Gambar Hilang");
                 label.setIcon(null);
-                System.err.println("File gambar tidak ditemukan di path: " + pathGambar);
             }
         } catch (Exception e) {
             label.setText("Error Muat Gambar");
@@ -61,63 +62,61 @@ public class UserDashboardForm extends javax.swing.JFrame {
         }
     }
 
-    private void tampilkanKamar(String sql) {
-        // Kosongkan panel setiap kali method dipanggil
+    private void tampilkanKamar(String sql, List<Object> params) {
         panelHasil.removeAll();
         
-        try {
-            java.sql.Connection conn = Koneksi.configDB();
-            java.sql.Statement stm = conn.createStatement();
-            java.sql.ResultSet res = stm.executeQuery(sql);
+        try (Connection conn = Koneksi.configDB();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+            
+            // Set parameter untuk PreparedStatement
+            for (int i = 0; i < params.size(); i++) {
+                pst.setObject(i + 1, params.get(i));
+            }
 
-            if (!res.isBeforeFirst() ) { // Cek apakah ResultSet kosong
-                JLabel lblKosong = new JLabel("Tidak ada kamar yang tersedia untuk kriteria ini.");
-                lblKosong.setHorizontalAlignment(JLabel.CENTER);
-                panelHasil.setLayout(new BorderLayout());
-                panelHasil.add(lblKosong, BorderLayout.CENTER);
-            } else {
-                 panelHasil.setLayout(new java.awt.GridLayout(0, 3, 15, 15)); // Kembalikan ke GridLayout
-                 while (res.next()) {
-                    // Membuat komponen-komponen untuk setiap kartu kamar
-                    javax.swing.JPanel kartuKamar = new javax.swing.JPanel();
-                    kartuKamar.setLayout(new javax.swing.BoxLayout(kartuKamar, javax.swing.BoxLayout.Y_AXIS));
-                    kartuKamar.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-                    kartuKamar.setBackground(new java.awt.Color(255, 255, 255));
+            try (ResultSet res = pst.executeQuery()) {
+                if (!res.isBeforeFirst()) {
+                    JLabel lblKosong = new JLabel("Tidak ada kamar yang tersedia untuk kriteria ini.");
+                    lblKosong.setHorizontalAlignment(JLabel.CENTER);
+                    panelHasil.setLayout(new BorderLayout());
+                    panelHasil.add(lblKosong, BorderLayout.CENTER);
+                } else {
+                    panelHasil.setLayout(new java.awt.GridLayout(0, 3, 15, 15));
+                    while (res.next()) {
+                        javax.swing.JPanel kartuKamar = new javax.swing.JPanel();
+                        kartuKamar.setLayout(new javax.swing.BoxLayout(kartuKamar, javax.swing.BoxLayout.Y_AXIS));
+                        kartuKamar.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+                        kartuKamar.setBackground(new java.awt.Color(255, 255, 255));
 
-                    // --- INI BAGIAN BARU UNTUK GAMBAR ---
-                    JLabel lblGambar = new JLabel();
-                    lblGambar.setPreferredSize(new java.awt.Dimension(250, 180)); // Atur ukuran area gambar
-                    lblGambar.setHorizontalAlignment(JLabel.CENTER);
-                    String namaFileGambar = res.getString("tk.gambar");
-                    // Panggil method bantuan untuk set gambar
-                    setImageToLabel(namaFileGambar, lblGambar);
-                    // --- AKHIR BAGIAN GAMBAR ---
+                        JLabel lblGambar = new JLabel();
+                        lblGambar.setPreferredSize(new java.awt.Dimension(250, 180));
+                        lblGambar.setHorizontalAlignment(JLabel.CENTER);
+                        String namaFileGambar = res.getString("gambar");
+                        setImageToLabel(namaFileGambar, lblGambar);
 
-                    JLabel lblNamaTipe = new JLabel("  " + res.getString("tk.nama_tipe"));
-                    lblNamaTipe.setFont(new java.awt.Font("Segoe UI", 1, 18));
+                        JLabel lblNamaTipe = new JLabel("  " + res.getString("nama_tipe"));
+                        lblNamaTipe.setFont(new java.awt.Font("Segoe UI", 1, 18));
 
-                    javax.swing.JTextArea txtAreaFasilitas = new javax.swing.JTextArea("  Fasilitas: " + res.getString("tk.fasilitas"));
-                    txtAreaFasilitas.setWrapStyleWord(true);
-                    txtAreaFasilitas.setLineWrap(true);
-                    txtAreaFasilitas.setEditable(false);
-                    txtAreaFasilitas.setOpaque(false);
+                        javax.swing.JTextArea txtAreaFasilitas = new javax.swing.JTextArea("  Fasilitas: " + res.getString("fasilitas"));
+                        txtAreaFasilitas.setWrapStyleWord(true);
+                        txtAreaFasilitas.setLineWrap(true);
+                        txtAreaFasilitas.setEditable(false);
+                        txtAreaFasilitas.setOpaque(false);
 
-                    JLabel lblHarga = new JLabel("  Rp " + res.getString("tk.harga") + " / malam");
-                    lblHarga.setFont(new java.awt.Font("Segoe UI", 1, 14));
+                        JLabel lblHarga = new JLabel("  Rp " + res.getString("harga") + " / malam");
+                        lblHarga.setFont(new java.awt.Font("Segoe UI", 1, 14));
 
-                    javax.swing.JButton btnPesan = new javax.swing.JButton("Pesan Sekarang");
-                    final String idKamar = res.getString("k.id");
-                    btnPesan.addActionListener(evt -> prosesPemesanan(idKamar));
+                        javax.swing.JButton btnPesan = new javax.swing.JButton("Pesan Sekarang");
+                        final String idKamar = res.getString("id");
+                        btnPesan.addActionListener(evt -> prosesPemesanan(idKamar));
 
-                    // Menambahkan semua komponen ke kartu (lblGambar ditaruh paling atas)
-                    kartuKamar.add(lblGambar);
-                    kartuKamar.add(lblNamaTipe);
-                    kartuKamar.add(txtAreaFasilitas);
-                    kartuKamar.add(lblHarga);
-                    kartuKamar.add(btnPesan);
+                        kartuKamar.add(lblGambar);
+                        kartuKamar.add(lblNamaTipe);
+                        kartuKamar.add(txtAreaFasilitas);
+                        kartuKamar.add(lblHarga);
+                        kartuKamar.add(btnPesan);
 
-                    // Menambahkan kartu ke panel utama
-                    panelHasil.add(kartuKamar);
+                        panelHasil.add(kartuKamar);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -125,29 +124,95 @@ public class UserDashboardForm extends javax.swing.JFrame {
             e.printStackTrace();
         }
         
-        // Refresh tampilan panel
         panelHasil.revalidate();
         panelHasil.repaint();
     }
     
-    // Method prosesPemesanan Anda biarkan apa adanya
     private void prosesPemesanan(String idKamar) {
         if (dateCheckin.getDate() == null || dateCheckout.getDate() == null) {
-            JOptionPane.showMessageDialog(this, "Silakan pilih tanggal Check-in dan Check-out terlebih dahulu.", "Tanggal Belum Dipilih", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Silakan pilih tanggal Check-in dan Check-out.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int konfirmasi = JOptionPane.showConfirmDialog(this, 
-            "Anda akan memesan kamar ini. Lanjutkan ke pembayaran?", 
-            "Konfirmasi Pemesanan", 
-            JOptionPane.YES_NO_OPTION);
+        if (dateCheckin.getDate().after(dateCheckout.getDate())) {
+            JOptionPane.showMessageDialog(this, "Tanggal Check-out harus setelah tanggal Check-in.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int konfirmasi = JOptionPane.showConfirmDialog(this, "Anda akan memesan kamar ini. Lanjutkan?", "Konfirmasi Pemesanan", JOptionPane.YES_NO_OPTION);
+
         if (konfirmasi == JOptionPane.YES_OPTION) {
-            // ... (sisa logika pemesanan Anda tidak berubah) ...
+            Connection conn = null;
+            try {
+                conn = Koneksi.configDB();
+                conn.setAutoCommit(false);
+
+                String sqlPemesanan = "INSERT INTO pemesanan (id_user, id_kamar, tanggal_checkin, tanggal_checkout, status_pemesanan) VALUES (?, ?, ?, ?, ?)";
+                PreparedStatement pstPemesanan = conn.prepareStatement(sqlPemesanan, Statement.RETURN_GENERATED_KEYS);
+
+                pstPemesanan.setInt(1, this.currentUser.getId());
+                pstPemesanan.setInt(2, Integer.parseInt(idKamar));
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                pstPemesanan.setString(3, sdf.format(dateCheckin.getDate()));
+                pstPemesanan.setString(4, sdf.format(dateCheckout.getDate()));
+                pstPemesanan.setString(5, "Menunggu Pembayaran");
+                pstPemesanan.executeUpdate();
+
+                ResultSet generatedKeys = pstPemesanan.getGeneratedKeys();
+                int idPemesananBaru = 0;
+                if (generatedKeys.next()) {
+                    idPemesananBaru = generatedKeys.getInt(1);
+                }
+
+                String sqlUpdateKamar = "UPDATE kamar SET status = 'Dipesan' WHERE id = ?";
+                PreparedStatement pstUpdateKamar = conn.prepareStatement(sqlUpdateKamar);
+                pstUpdateKamar.setInt(1, Integer.parseInt(idKamar));
+                pstUpdateKamar.executeUpdate();
+
+                conn.commit();
+
+                String subjekEmail = "Konfirmasi Pemesanan Hotel - ID #" + idPemesananBaru;
+                String isiEmail = "Halo " + this.currentUser.getNamaLengkap() + ",\n\nPemesanan Anda telah kami terima.\n\nDetail:\nID Pesanan: " + idPemesananBaru + "\nCheck-in: " + sdf.format(dateCheckin.getDate()) + "\nCheck-out: " + sdf.format(dateCheckout.getDate()) + "\n\nStatus: Menunggu Pembayaran.";
+                
+                if (this.currentUser.getEmail() != null && !this.currentUser.getEmail().isEmpty()) {
+                    util.EmailService.kirimStruk(this.currentUser.getEmail(), subjekEmail, isiEmail);
+                    JOptionPane.showMessageDialog(this, "Pemesanan berhasil! Bukti konfirmasi telah dikirim ke email Anda.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                     JOptionPane.showMessageDialog(this, "Pemesanan berhasil! (Email tidak terkirim karena tidak terdaftar)", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                }
+                
+                btnCari.doClick();
+
+            } catch (Exception e) {
+                try {
+                    if (conn != null) conn.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("Rollback gagal: " + ex.getMessage());
+                }
+                JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (conn != null) conn.setAutoCommit(true);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
     }
     
-    // Method loadTipeKamarFilter Anda biarkan apa adanya
     private void loadTipeKamarFilter() {
-        // ... (logika load filter Anda tidak berubah) ...
+        try (Connection conn = Koneksi.configDB();
+             Statement stm = conn.createStatement();
+             ResultSet res = stm.executeQuery("SELECT nama_tipe FROM tipe_kamar GROUP BY nama_tipe ORDER BY nama_tipe ASC")) {
+            
+            comboTipeFilter.removeAllItems();
+            comboTipeFilter.addItem("Semua Tipe"); // Opsi default
+            while(res.next()){
+                comboTipeFilter.addItem(res.getString("nama_tipe"));
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Gagal memuat filter tipe kamar: " + e.getMessage());
+        }
     }
 
     /**
@@ -292,77 +357,75 @@ public class UserDashboardForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCariActionPerformed
-       try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            
-            // Query dasar sudah diperbaiki untuk mengambil gambar
-            StringBuilder queryBuilder = new StringBuilder(
-                "SELECT k.id, tk.nama_tipe, tk.fasilitas, tk.harga, tk.gambar " +
-                "FROM kamar k JOIN tipe_kamar tk ON k.id_tipe_kamar = tk.id "
-            );
+       StringBuilder queryBuilder = new StringBuilder(
+            "SELECT k.id, tk.nama_tipe, tk.fasilitas, tk.harga, tk.gambar " +
+            "FROM kamar k JOIN tipe_kamar tk ON k.id_tipe_kamar = tk.id "
+        );
+        StringBuilder whereClause = new StringBuilder("WHERE 1=1");
+        List<Object> params = new ArrayList<>();
 
-            StringBuilder whereClause = new StringBuilder("WHERE k.status = 'Tersedia'");
+        whereClause.append(" AND k.status = ?");
+        params.add("Tersedia");
 
-            if (dateCheckin.getDate() != null && dateCheckout.getDate() != null) {
-                 String checkinDate = sdf.format(dateCheckin.getDate());
-                 String checkoutDate = sdf.format(dateCheckout.getDate());
-                 whereClause.append(" AND k.id NOT IN (");
-                 whereClause.append("SELECT id_kamar FROM pemesanan WHERE id_kamar IS NOT NULL AND (");
-                 whereClause.append("('").append(checkinDate).append("' < tanggal_checkout) AND ");
-                 whereClause.append("('").append(checkoutDate).append("' > tanggal_checkin)");
-                 whereClause.append("))");
-            }
+        if (dateCheckin.getDate() != null && dateCheckout.getDate() != null) {
+            whereClause.append(" AND k.id NOT IN (");
+            whereClause.append("SELECT id_kamar FROM pemesanan WHERE id_kamar IS NOT NULL AND (");
+            whereClause.append("? < tanggal_checkout AND ? > tanggal_checkin");
+            whereClause.append("))");
             
-            String tipeDipilih = comboTipeFilter.getSelectedItem().toString();
-            if (!tipeDipilih.equals("Semua Tipe")) {
-                whereClause.append(" AND tk.nama_tipe = '").append(tipeDipilih).append("'");
-            }
-            
-            queryBuilder.append(" ").append(whereClause);
-            
-            tampilkanKamar(queryBuilder.toString());
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Terjadi kesalahan saat mencari: " + e.getMessage());
-            e.printStackTrace();
+            java.sql.Date checkinDate = new java.sql.Date(dateCheckin.getDate().getTime());
+            java.sql.Date checkoutDate = new java.sql.Date(dateCheckout.getDate().getTime());
+            params.add(checkinDate);
+            params.add(checkoutDate);
         }
+        
+        String tipeDipilih = comboTipeFilter.getSelectedItem().toString();
+        if (!tipeDipilih.equals("Semua Tipe")) {
+            whereClause.append(" AND tk.nama_tipe = ?");
+            params.add(tipeDipilih);
+        }
+        
+        queryBuilder.append(" ").append(whereClause);
+        
+        tampilkanKamar(queryBuilder.toString(), params);
     }//GEN-LAST:event_btnCariActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new UserDashboardForm().setVisible(true);
-            }
-        });
-    }
-
+//    
+//    public static void main(String args[]) {
+//        /* Set the Nimbus look and feel */
+//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+//         */
+//        try {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//                if ("Nimbus".equals(info.getName())) {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+//        } catch (ClassNotFoundException ex) {
+//            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex) {
+//            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex) {
+//            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+//            java.util.logging.Logger.getLogger(UserDashboardForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        }
+//        //</editor-fold>
+//
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new UserDashboardForm().setVisible(true);
+//            }
+//        });
+//    }
+ 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCari;
     private javax.swing.JComboBox<String> comboTipeFilter;

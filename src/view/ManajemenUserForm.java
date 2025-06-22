@@ -4,67 +4,69 @@
  */
 package view;
 
-import db.Koneksi;
+import controller.UserController; // Import controller
 import java.awt.Color;
 import java.awt.Font;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import model.User; // Import model
 
 public class ManajemenUserForm extends javax.swing.JFrame {
 
-    private void load_table() {
-    DefaultTableModel model = new DefaultTableModel();
-    model.addColumn("ID");
-    model.addColumn("Nama Lengkap");
-    model.addColumn("Username");
-    model.addColumn("Role");
-
-    try {
-        // Kita tidak menampilkan kolom password demi keamanan
-        String sql = "SELECT id, nama_lengkap, username, role FROM users ORDER BY id ASC";
-        Connection conn = (Connection) Koneksi.configDB();
-        Statement stm = conn.createStatement();
-        ResultSet res = stm.executeQuery(sql);
-        while (res.next()) {
-            model.addRow(new Object[]{
-                res.getString("id"), 
-                res.getString("nama_lengkap"), 
-                res.getString("username"), 
-                res.getString("role")
-            });
-        }
-        tabelUser.setModel(model);
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal memuat tabel: " + e.getMessage());
-    }
-}
-
-// Method untuk Membersihkan Form
-private void clear_form() {
-    lblIdUser.setText("");
-    txtNamaLengkap.setText("");
-    txtUsernameUser.setText("");
-    txtPasswordUser.setText("");
-    comboRole.setSelectedIndex(0);
-}
+    private final UserController userController; // Deklarasikan controller
 
     public ManajemenUserForm() {
         initComponents();
-         tabelUser.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-    tabelUser.getTableHeader().setBackground(new Color(0, 51, 102));
-    tabelUser.getTableHeader().setForeground(new Color(255, 255, 255));
+        this.userController = new UserController(); // Inisialisasi controller
+        
+        // Pengaturan UI lainnya
+        setLocationRelativeTo(null);
+        tabelUser.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabelUser.getTableHeader().setBackground(new Color(0, 51, 102));
+        tabelUser.getTableHeader().setForeground(new Color(255, 255, 255));
+        
+        comboRole.removeAllItems();
+        comboRole.addItem("Admin");
+        comboRole.addItem("User");
+        
+        load_table();
+        clear_form();
+        lblIdUser.setVisible(false);
+    }
     
-    // Mengisi combo box role
-    comboRole.addItem("Admin");
-    comboRole.addItem("User");
-    
-    // Memuat data awal
-    load_table();
-    clear_form();
+    // VIEW HANYA MEMANGGIL CONTROLLER, TIDAK ADA SQL DI SINI
+    private void load_table() {
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("ID");
+        model.addColumn("Nama Lengkap");
+        model.addColumn("Email");
+        model.addColumn("Username");
+        model.addColumn("Role");
+        
+        // Panggil method controller untuk mendapatkan data
+        List<User> users = userController.getAllUsers();
+        
+        // Loop data dari controller, bukan dari ResultSet
+        for (User user : users) {
+            model.addRow(new Object[]{
+                user.getId(),
+                user.getNamaLengkap(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getRole()
+            });
+        }
+        tabelUser.setModel(model);
+    }
+
+    private void clear_form() {
+        lblIdUser.setText("0");
+        txtNamaLengkap.setText("");
+        txtEmailUser.setText("");
+        txtUsernameUser.setText("");
+        txtPasswordUser.setText("");
+        comboRole.setSelectedIndex(0);
     }
 
     /**
@@ -92,6 +94,8 @@ private void clear_form() {
         btnHapusUser = new javax.swing.JButton();
         btnBersihUser = new javax.swing.JButton();
         lblIdUser = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        txtEmailUser = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         tabelUser = new javax.swing.JTable();
 
@@ -188,6 +192,9 @@ private void clear_form() {
 
         lblIdUser.setText("0");
 
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jLabel3.setText("EMAIL");
+
         javax.swing.GroupLayout panelInputLayout = new javax.swing.GroupLayout(panelInput);
         panelInput.setLayout(panelInputLayout);
         panelInputLayout.setHorizontalGroup(
@@ -196,30 +203,37 @@ private void clear_form() {
                 .addContainerGap()
                 .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelInputLayout.createSequentialGroup()
-                        .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel8))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 79, Short.MAX_VALUE)
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(txtUsernameUser, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelInputLayout.createSequentialGroup()
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 116, Short.MAX_VALUE)
                         .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelInputLayout.createSequentialGroup()
-                                .addComponent(btnEditUser, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
-                                .addComponent(btnHapusUser, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(39, 39, 39)
-                                .addComponent(btnBersihUser))
-                            .addComponent(btnSimpanUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnSimpanUser, javax.swing.GroupLayout.DEFAULT_SIZE, 351, Short.MAX_VALUE)
                             .addComponent(comboRole, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txtPasswordUser, javax.swing.GroupLayout.Alignment.TRAILING)))
+                            .addGroup(panelInputLayout.createSequentialGroup()
+                                .addComponent(btnEditUser, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(31, 31, 31)
+                                .addComponent(btnHapusUser, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnBersihUser))))
                     .addGroup(panelInputLayout.createSequentialGroup()
-                        .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel6))
+                        .addComponent(jLabel2)
                         .addGap(45, 45, 45)
                         .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblIdUser, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(txtUsernameUser, javax.swing.GroupLayout.DEFAULT_SIZE, 351, Short.MAX_VALUE)
-                                .addComponent(txtNamaLengkap)))))
+                            .addGroup(panelInputLayout.createSequentialGroup()
+                                .addComponent(lblIdUser, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(txtNamaLengkap, javax.swing.GroupLayout.DEFAULT_SIZE, 351, Short.MAX_VALUE)))
+                    .addGroup(panelInputLayout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(txtEmailUser, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelInputLayout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(txtPasswordUser, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(56, Short.MAX_VALUE))
         );
         panelInputLayout.setVerticalGroup(
@@ -231,38 +245,42 @@ private void clear_form() {
                 .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(txtNamaLengkap, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(44, 44, 44)
+                .addGap(27, 27, 27)
                 .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(txtUsernameUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(46, 46, 46)
+                    .addComponent(jLabel3)
+                    .addComponent(txtEmailUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(36, 36, 36)
                 .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(txtPasswordUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(47, 47, 47)
+                    .addComponent(txtUsernameUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addGap(33, 33, 33)
+                .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtPasswordUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7))
+                .addGap(39, 39, 39)
                 .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(comboRole, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(46, 46, 46)
+                .addGap(87, 87, 87)
                 .addComponent(btnSimpanUser)
-                .addGap(43, 43, 43)
+                .addGap(18, 18, 18)
                 .addGroup(panelInputLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnEditUser)
                     .addComponent(btnHapusUser)
-                    .addComponent(btnBersihUser)
-                    .addComponent(btnEditUser))
-                .addContainerGap(297, Short.MAX_VALUE))
+                    .addComponent(btnBersihUser))
+                .addContainerGap(261, Short.MAX_VALUE))
         );
 
         tabelUser.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         tabelUser.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Title 1", "EMAIL", "Title 3", "Title 4", "Title 5"
             }
         ));
         tabelUser.setSelectionBackground(new java.awt.Color(0, 123, 255));
@@ -310,75 +328,55 @@ private void clear_form() {
     }//GEN-LAST:event_tabelUserMouseClicked
 
     private void btnSimpanUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanUserActionPerformed
-        try {
-        String sql = "INSERT INTO users (nama_lengkap, username, password, role) VALUES (?, ?, ?, ?)";
-        Connection conn = (Connection) Koneksi.configDB();
-        PreparedStatement pst = conn.prepareStatement(sql);
-        pst.setString(1, txtNamaLengkap.getText());
-        pst.setString(2, txtUsernameUser.getText());
-        pst.setString(3, new String(txtPasswordUser.getPassword()));
-        pst.setString(4, comboRole.getSelectedItem().toString());
-        pst.execute();
-        JOptionPane.showMessageDialog(null, "Data User Berhasil Disimpan");
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal menyimpan data: " + e.getMessage());
-    }
-    load_table();
-    clear_form();
+        User newUser = new User();
+        newUser.setNamaLengkap(txtNamaLengkap.getText());
+        newUser.setEmail(txtEmailUser.getText());
+        newUser.setUsername(txtUsernameUser.getText());
+        newUser.setPassword(new String(txtPasswordUser.getPassword()));
+        newUser.setRole(comboRole.getSelectedItem().toString());
+
+        // 2. Kirim objek Model ke Controller untuk disimpan
+        if (userController.saveUser(newUser)) {
+            JOptionPane.showMessageDialog(null, "Data User Berhasil Disimpan");
+            load_table();
+            clear_form();
+        }
     }//GEN-LAST:event_btnSimpanUserActionPerformed
 
     private void btnEditUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditUserActionPerformed
-        try {
-        String idUser = lblIdUser.getText();
+       User userToUpdate = new User();
+        userToUpdate.setId(Integer.parseInt(lblIdUser.getText()));
+        userToUpdate.setNamaLengkap(txtNamaLengkap.getText());
+        userToUpdate.setEmail(txtEmailUser.getText());
+        userToUpdate.setUsername(txtUsernameUser.getText());
+        userToUpdate.setRole(comboRole.getSelectedItem().toString());
+        
         String password = new String(txtPasswordUser.getPassword());
-        Connection conn = (Connection) Koneksi.configDB();
-        
-        // Cek apakah admin ingin mengubah password atau tidak
-        if (password.isEmpty()) {
-            // Jika field password kosong, update data TANPA mengubah password
-            String sql_update = "UPDATE users SET nama_lengkap = ?, username = ?, role = ? WHERE id = ?";
-            PreparedStatement pst = conn.prepareStatement(sql_update);
-            pst.setString(1, txtNamaLengkap.getText());
-            pst.setString(2, txtUsernameUser.getText());
-            pst.setString(3, comboRole.getSelectedItem().toString());
-            pst.setString(4, idUser);
-            pst.executeUpdate();
-        } else {
-            // Jika field password diisi, update data DAN password
-            String sql_update_with_pass = "UPDATE users SET nama_lengkap = ?, username = ?, password = ?, role = ? WHERE id = ?";
-            PreparedStatement pst = conn.prepareStatement(sql_update_with_pass);
-            pst.setString(1, txtNamaLengkap.getText());
-            pst.setString(2, txtUsernameUser.getText());
-            pst.setString(3, password);
-            pst.setString(4, comboRole.getSelectedItem().toString());
-            pst.setString(5, idUser);
-            pst.executeUpdate();
+        boolean isPasswordChanged = !password.isEmpty();
+        if (isPasswordChanged) {
+            userToUpdate.setPassword(password);
         }
-        
-        JOptionPane.showMessageDialog(null, "Data Berhasil Diedit");
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal mengedit data: " + e.getMessage());
-    }
-    load_table();
-    clear_form();
+
+        // 2. Kirim objek Model ke Controller untuk diedit
+        if (userController.updateUser(userToUpdate, isPasswordChanged)) {
+            JOptionPane.showMessageDialog(null, "Data Berhasil Diedit");
+            load_table();
+            clear_form();
+        }
     }//GEN-LAST:event_btnEditUserActionPerformed
 
     private void btnHapusUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusUserActionPerformed
-         try {
-        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data user ini?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+         int id = Integer.parseInt(lblIdUser.getText());
+        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus user dengan ID " + id + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+        
         if (confirm == JOptionPane.YES_OPTION) {
-            String sql = "DELETE FROM users WHERE id = ?";
-            Connection conn = (Connection) Koneksi.configDB();
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, lblIdUser.getText());
-            pst.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Data Berhasil Dihapus");
+            // Panggil controller untuk hapus data
+            if (userController.deleteUser(id)) {
+                JOptionPane.showMessageDialog(null, "Data Berhasil Dihapus");
+                load_table();
+                clear_form();
+            }
         }
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal menghapus data: " + e.getMessage());
-    }
-    load_table();
-    clear_form();
     }//GEN-LAST:event_btnHapusUserActionPerformed
 
     private void btnBersihUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBersihUserActionPerformed
@@ -428,6 +426,7 @@ private void clear_form() {
     private javax.swing.JComboBox<String> comboRole;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -436,6 +435,7 @@ private void clear_form() {
     private javax.swing.JPanel panelInput;
     private javax.swing.JPanel panelJudul;
     private javax.swing.JTable tabelUser;
+    private javax.swing.JTextField txtEmailUser;
     private javax.swing.JTextField txtNamaLengkap;
     private javax.swing.JPasswordField txtPasswordUser;
     private javax.swing.JTextField txtUsernameUser;

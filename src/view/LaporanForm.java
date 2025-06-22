@@ -4,31 +4,37 @@
  */
 package view;
 
-import db.Koneksi;
+import controller.LaporanController;
 import java.awt.Color;
 import java.awt.Font;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import model.LaporanData;
+import model.Pemesanan;
 
 public class LaporanForm extends javax.swing.JFrame {
 
-    private String formatRupiah(long nominal) {
-    Locale localeID = new Locale("in", "ID");
-    NumberFormat formatRupiah = NumberFormat.getCurrencyInstance(localeID);
-    formatRupiah.setMinimumFractionDigits(0); // Tidak menampilkan desimal
-    return formatRupiah.format(nominal);
-}
+    private final LaporanController controller;
+
     public LaporanForm() {
         initComponents();
+        btnExportExcel.setEnabled(false);
+        this.controller = new LaporanController();
+        
         tabelLaporan.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabelLaporan.getTableHeader().setBackground(new Color(0, 51, 102));
         tabelLaporan.getTableHeader().setForeground(new Color(255, 255, 255));
+        setLocationRelativeTo(null);
+    }
+
+    private String formatRupiah(long nominal) {
+        Locale localeID = new Locale("in", "ID");
+        NumberFormat formatRupiah = NumberFormat.getCurrencyInstance(localeID);
+        formatRupiah.setMaximumFractionDigits(0);
+        return formatRupiah.format(nominal);
     }
 
     /**
@@ -48,6 +54,7 @@ public class LaporanForm extends javax.swing.JFrame {
         dateMulai = new com.toedter.calendar.JDateChooser();
         dateSelesai = new com.toedter.calendar.JDateChooser();
         btnGenerate = new javax.swing.JButton();
+        btnExportExcel = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tabelLaporan = new javax.swing.JTable();
         panelTotal = new javax.swing.JPanel();
@@ -97,6 +104,13 @@ public class LaporanForm extends javax.swing.JFrame {
             }
         });
 
+        btnExportExcel.setText("Cetak Laporan");
+        btnExportExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExportExcelActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout panelFilterLayout = new javax.swing.GroupLayout(panelFilter);
         panelFilter.setLayout(panelFilterLayout);
         panelFilterLayout.setHorizontalGroup(
@@ -110,16 +124,20 @@ public class LaporanForm extends javax.swing.JFrame {
                 .addComponent(jLabel3)
                 .addGap(18, 18, 18)
                 .addComponent(dateSelesai, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 683, Short.MAX_VALUE)
+                .addGap(152, 152, 152)
                 .addComponent(btnGenerate)
-                .addGap(98, 98, 98))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 472, Short.MAX_VALUE)
+                .addComponent(btnExportExcel)
+                .addGap(51, 51, 51))
         );
         panelFilterLayout.setVerticalGroup(
             panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelFilterLayout.createSequentialGroup()
                 .addGap(33, 33, 33)
                 .addGroup(panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnGenerate)
+                    .addGroup(panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnGenerate)
+                        .addComponent(btnExportExcel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addComponent(dateSelesai, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(dateMulai, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -197,72 +215,53 @@ public class LaporanForm extends javax.swing.JFrame {
 
     private void btnGenerateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerateActionPerformed
         if (dateMulai.getDate() == null || dateSelesai.getDate() == null) {
-        JOptionPane.showMessageDialog(this, "Silakan pilih Tanggal Mulai dan Tanggal Selesai.", "Peringatan", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
+            JOptionPane.showMessageDialog(this, "Silakan pilih Tanggal Mulai dan Tanggal Selesai.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    // Siapkan table model dan format tanggal
-    DefaultTableModel model = new DefaultTableModel();
-    model.addColumn("ID Pesanan");
-    model.addColumn("Tamu");
-    model.addColumn("Tipe Kamar");
-    model.addColumn("Tgl Check-in");
-    model.addColumn("Jml Malam");
-    model.addColumn("Harga/Malam");
-    model.addColumn("Subtotal");
+        // Panggil controller untuk mendapatkan data laporan
+        LaporanData laporan = controller.generateLaporan(dateMulai.getDate(), dateSelesai.getDate());
 
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    String tanggalMulai = sdf.format(dateMulai.getDate());
-    String tanggalSelesai = sdf.format(dateSelesai.getDate());
-
-    long totalPendapatan = 0;
-
-    try {
-        // Query untuk mengambil data laporan
-        String sql = "SELECT p.id, u.nama_lengkap, tk.nama_tipe, p.tanggal_checkin, " +
-                     "DATEDIFF(p.tanggal_checkout, p.tanggal_checkin) AS jumlah_malam, " +
-                     "tk.harga, " +
-                     "(DATEDIFF(p.tanggal_checkout, p.tanggal_checkin) * tk.harga) AS subtotal " +
-                     "FROM pemesanan p " +
-                     "JOIN users u ON p.id_user = u.id " +
-                     "JOIN kamar k ON p.id_kamar = k.id " +
-                     "JOIN tipe_kamar tk ON k.id_tipe_kamar = tk.id " +
-                     "WHERE p.status_pemesanan IN ('Terkonfirmasi', 'Selesai') " +
-                     "AND p.tanggal_checkin BETWEEN ? AND ?";
+        // Siapkan table model
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("ID Pesanan");
+        model.addColumn("Tamu");
+        model.addColumn("Tipe Kamar");
+        model.addColumn("Tgl Check-in");
+        model.addColumn("Jml Malam");
+        model.addColumn("Harga/Malam");
+        model.addColumn("Subtotal");
         
-        Connection conn = Koneksi.configDB();
-        PreparedStatement pst = conn.prepareStatement(sql);
-        pst.setString(1, tanggalMulai);
-        pst.setString(2, tanggalSelesai);
-        
-        ResultSet res = pst.executeQuery();
+        // Isi tabel dari data yang dikembalikan controller
+        for (Pemesanan p : laporan.getDetailPemesanan()) {
+            long diffInMillies = Math.abs(p.getTanggalCheckout().getTime() - p.getTanggalCheckin().getTime());
+            long jumlahMalam = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 
-        // Looping untuk mengisi tabel dan menghitung total
-        while (res.next()) {
-            long subtotal = res.getLong("subtotal");
-            totalPendapatan += subtotal;
-            
             model.addRow(new Object[]{
-                "P00" + res.getString("p.id"),
-                res.getString("u.nama_lengkap"),
-                res.getString("tk.nama_tipe"),
-                res.getString("p.tanggal_checkin"),
-                res.getString("jumlah_malam"),
-                formatRupiah(res.getLong("tk.harga")),
-                formatRupiah(subtotal)
+                "P00" + p.getId(),
+                p.getUser().getNamaLengkap(),
+                p.getKamar().getTipeKamar().getNamaTipe(),
+                p.getTanggalCheckin().toString(),
+                jumlahMalam,
+                formatRupiah(p.getKamar().getTipeKamar().getHarga()),
+                formatRupiah(p.getTotalBiaya())
             });
         }
         
         tabelLaporan.setModel(model);
         
-        // Tampilkan total pendapatan yang sudah diformat
-        lblTotalPendapatan.setText(formatRupiah(totalPendapatan));
+        // Tampilkan total pendapatan dari data yang dikembalikan controller
+        lblTotalPendapatan.setText(formatRupiah(laporan.getTotalPendapatan()));
+        tabelLaporan.setModel(model);
+    lblTotalPendapatan.setText(formatRupiah(laporan.getTotalPendapatan()));
 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal menghasilkan laporan: " + e.getMessage());
-        e.printStackTrace();
-    }
+    // Aktifkan tombol ekspor jika ada data di tabel
+    btnExportExcel.setEnabled(model.getRowCount() > 0); 
     }//GEN-LAST:event_btnGenerateActionPerformed
+
+    private void btnExportExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportExcelActionPerformed
+        util.ExcelExporter.exportToExcel(tabelLaporan, this);
+    }//GEN-LAST:event_btnExportExcelActionPerformed
 
     /**
      * @param args the command line arguments
@@ -300,6 +299,7 @@ public class LaporanForm extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnExportExcel;
     private javax.swing.JButton btnGenerate;
     private com.toedter.calendar.JDateChooser dateMulai;
     private com.toedter.calendar.JDateChooser dateSelesai;

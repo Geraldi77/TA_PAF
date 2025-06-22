@@ -6,6 +6,7 @@ import javax.swing.JOptionPane;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
 
 
 public class LoginForm extends javax.swing.JFrame {
@@ -173,33 +174,48 @@ public class LoginForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-       try {
-        String sql = "SELECT * FROM users WHERE username='" + txtUsername.getText() 
-                   + "' AND password='" + new String(txtPassword.getPassword()) + "'";
-        java.sql.Connection conn = Koneksi.configDB();
-        java.sql.Statement stm = conn.createStatement();
-        java.sql.ResultSet res = stm.executeQuery(sql);
+      String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+    
+    try (Connection conn = Koneksi.configDB();
+         PreparedStatement pst = conn.prepareStatement(sql)) {
 
-        if (res.next()) {
-            String role = res.getString("role");
-            
-            if ("Admin".equals(role)) {
+        // Set parameter untuk query
+        pst.setString(1, txtUsername.getText());
+        pst.setString(2, new String(txtPassword.getPassword()));
+
+        try (ResultSet res = pst.executeQuery()) {
+            // Cek apakah user ditemukan
+            if (res.next()) {
+                String role = res.getString("role");
                 
-                JOptionPane.showMessageDialog(null, "Login berhasil sebagai Admin!");
-                new AdminDashboardForm().setVisible(true); 
-                this.dispose(); 
-            } else if ("User".equals(role)) {
+                // ---- INI BAGIAN YANG DIPERBAIKI ----
+                if ("Admin".equals(role)) {
+                    JOptionPane.showMessageDialog(null, "Login berhasil! Selamat datang, Admin.");
+                    new AdminDashboardForm().setVisible(true); // Membuka dashboard admin
+                    this.dispose(); // Menutup form login
+                } 
+                // ---- AKHIR BAGIAN YANG DIPERBAIKI ----
                 
-                JOptionPane.showMessageDialog(null, "Login berhasil sebagai User!");
-                new UserDashboardForm().setVisible(true); 
-                this.dispose(); 
+                else if ("User".equals(role)) {
+                    model.User loggedInUser = new model.User();
+                    loggedInUser.setId(res.getInt("id"));
+                    loggedInUser.setNamaLengkap(res.getString("nama_lengkap"));
+                    loggedInUser.setEmail(res.getString("email"));
+                    
+                    JOptionPane.showMessageDialog(null, "Login berhasil! Selamat datang, " + loggedInUser.getNamaLengkap());
+                    new UserDashboardForm(loggedInUser).setVisible(true); 
+                    this.dispose(); 
+                }
+            } else {
+                // Jika tidak ada baris data yang cocok
+                JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", JOptionPane.ERROR_MESSAGE);
             }
-        } else {
-            JOptionPane.showMessageDialog(null, "Username atau Password salah!");
         }
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, e.getMessage());
+        JOptionPane.showMessageDialog(this, "Terjadi kesalahan koneksi database: " + e.getMessage());
+        e.printStackTrace();
     }
+
 
     }//GEN-LAST:event_btnLoginActionPerformed
 

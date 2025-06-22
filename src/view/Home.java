@@ -259,11 +259,8 @@ public class Home extends javax.swing.JFrame {
 
     private void btnPesanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPesanActionPerformed
         UserDashboardForm formUserDashboard = new UserDashboardForm();
-    // 2. Tampilkan form Home tersebut
-    formUserDashboard.setVisible(true);
-
-    // 3. Tutup form yang sekarang (Contact)
-    this.dispose();
+        formUserDashboard.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnPesanActionPerformed
 
     private void lbla2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbla2MouseClicked

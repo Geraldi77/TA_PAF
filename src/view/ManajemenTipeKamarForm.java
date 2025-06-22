@@ -4,28 +4,27 @@
  */
 package view;
 
-
-import db.Koneksi;
+import controller.TipeKamarController;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
 import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import model.TipeKamar;
 
 public class ManajemenTipeKamarForm extends javax.swing.JFrame {
 
-    private File fileGambarTerpilih; // Variabel untuk menyimpan file gambar
+    private final TipeKamarController controller;
+    private File fileGambarTerpilih;
 
     public ManajemenTipeKamarForm() {
         initComponents();
-        // Styling header tabel
+        this.controller = new TipeKamarController();
+        
         tabelTipeKamar.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabelTipeKamar.getTableHeader().setBackground(new Color(0, 51, 102));
         tabelTipeKamar.getTableHeader().setForeground(new Color(255, 255, 255));
@@ -34,47 +33,37 @@ public class ManajemenTipeKamarForm extends javax.swing.JFrame {
         clear_form();
     }
     
-    // Method untuk memuat data ke tabel
     private void load_table() {
         DefaultTableModel model = new DefaultTableModel();
         model.addColumn("ID");
         model.addColumn("Nama Tipe");
         model.addColumn("Fasilitas");
         model.addColumn("Harga per Malam");
-        model.addColumn("File Gambar"); // Tambah kolom untuk nama file gambar
+        model.addColumn("File Gambar");
 
-        try {
-            String sql = "SELECT id, nama_tipe, fasilitas, harga, gambar FROM tipe_kamar ORDER BY id ASC";
-            Connection conn = (Connection) Koneksi.configDB();
-            Statement stm = conn.createStatement();
-            ResultSet res = stm.executeQuery(sql);
-            while (res.next()) {
-                model.addRow(new Object[]{
-                    res.getString("id"), 
-                    res.getString("nama_tipe"), 
-                    res.getString("fasilitas"), 
-                    "Rp " + res.getString("harga"),
-                    res.getString("gambar") // Tampilkan nama file gambar
-                });
-            }
-            tabelTipeKamar.setModel(model);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal memuat tabel: " + e.getMessage());
+        List<TipeKamar> listTipeKamar = controller.getAllTipeKamar();
+        for (TipeKamar tipe : listTipeKamar) {
+            model.addRow(new Object[]{
+                tipe.getId(), 
+                tipe.getNamaTipe(), 
+                tipe.getFasilitas(), 
+                "Rp " + tipe.getHarga(),
+                tipe.getGambar()
+            });
         }
+        tabelTipeKamar.setModel(model);
     }
 
-    // Method untuk membersihkan form input
     private void clear_form() {
         lblIdTipeKamar.setText("0");
         txtNamaTipe.setText("");
         txtAreaFasilitas.setText("");
         txtHarga.setText("");
-        lblPreviewGambar.setIcon(null); // Bersihkan preview gambar
+        lblPreviewGambar.setIcon(null);
         lblPreviewGambar.setText("Preview Gambar");
-        fileGambarTerpilih = null; // Reset file yang dipilih
+        fileGambarTerpilih = null;
     }
 
-    // Method bantuan untuk menampilkan gambar di JLabel
     private void displayImage(String namaFileGambar) {
         if (namaFileGambar == null || namaFileGambar.isEmpty()) {
             lblPreviewGambar.setIcon(null);
@@ -86,13 +75,12 @@ public class ManajemenTipeKamarForm extends javax.swing.JFrame {
             ImageIcon icon = new ImageIcon(pathGambar);
             Image img = icon.getImage().getScaledInstance(lblPreviewGambar.getWidth(), lblPreviewGambar.getHeight(), Image.SCALE_SMOOTH);
             lblPreviewGambar.setIcon(new ImageIcon(img));
+            lblPreviewGambar.setText("");
         } catch (Exception e) {
             lblPreviewGambar.setIcon(null);
             lblPreviewGambar.setText("Gagal muat gambar");
-            System.err.println("Error memuat gambar: " + e.getMessage());
         }
     }
-
 
 
 
@@ -275,7 +263,7 @@ public class ManajemenTipeKamarForm extends javax.swing.JFrame {
                     .addComponent(btnHapusTipe)
                     .addComponent(btnBersihTipe))
                 .addGap(44, 44, 44)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblPreviewGambar, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnPilihGambar))
                 .addContainerGap(40, Short.MAX_VALUE))
@@ -340,121 +328,42 @@ public class ManajemenTipeKamarForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSimpanTipeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanTipeActionPerformed
-           String namaFileGambar = null; // Defaultnya null (tidak ada gambar)
-
-        // 1. Proses dan salin gambar jika ada file yang dipilih oleh admin
-        if (fileGambarTerpilih != null) {
-            try {
-                String folderTujuan = System.getProperty("user.dir") + "/app_images/";
-                File folder = new File(folderTujuan);
-                if (!folder.exists()) {
-                    folder.mkdirs(); // Buat folder jika belum ada
-                }
-
-                // Buat nama file baru yang unik untuk menghindari nama yang sama
-                String ekstensi = fileGambarTerpilih.getName().substring(fileGambarTerpilih.getName().lastIndexOf("."));
-                namaFileGambar = "kamar_" + System.currentTimeMillis() + ekstensi;
-
-                // Salin file
-                java.nio.file.Files.copy(fileGambarTerpilih.toPath(), 
-                        java.nio.file.Paths.get(folderTujuan + namaFileGambar), 
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Gagal menyimpan file gambar: " + e.getMessage());
-                return; // Hentikan proses jika gagal menyimpan gambar
-            }
-        }
-
-        // 2. Simpan semua data ke database
-        try {
-            String sql = "INSERT INTO tipe_kamar (nama_tipe, fasilitas, harga, gambar) VALUES (?, ?, ?, ?)";
-            Connection conn = (Connection) Koneksi.configDB();
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, txtNamaTipe.getText());
-            pst.setString(2, txtAreaFasilitas.getText());
-            pst.setString(3, txtHarga.getText());
-            pst.setString(4, namaFileGambar); // Simpan nama file (atau null jika tidak ada)
-            pst.execute();
+           TipeKamar tipe = new TipeKamar();
+        tipe.setNamaTipe(txtNamaTipe.getText());
+        tipe.setFasilitas(txtAreaFasilitas.getText());
+        tipe.setHarga(Integer.parseInt(txtHarga.getText()));
+        
+        if (controller.saveTipeKamar(tipe, fileGambarTerpilih)) {
             JOptionPane.showMessageDialog(null, "Data Tipe Kamar Berhasil Disimpan");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal menyimpan data ke DB: " + e.getMessage());
+            load_table();
+            clear_form();
         }
-
-        load_table();
-        clear_form();
     }//GEN-LAST:event_btnSimpanTipeActionPerformed
 
     private void btnEditTipeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditTipeActionPerformed
-       String namaFileGambar = null;
+       TipeKamar tipe = new TipeKamar();
+        tipe.setId(Integer.parseInt(lblIdTipeKamar.getText()));
+        tipe.setNamaTipe(txtNamaTipe.getText());
+        tipe.setFasilitas(txtAreaFasilitas.getText());
+        tipe.setHarga(Integer.parseInt(txtHarga.getText()));
         
-        // Cek apakah admin memilih gambar baru untuk diedit
-        if (fileGambarTerpilih != null) {
-            // Logika menyalin file sama seperti saat simpan
-            try {
-                String folderTujuan = System.getProperty("user.dir") + "/app_images/";
-                File folder = new File(folderTujuan);
-                if (!folder.exists()) folder.mkdirs();
-
-                String ekstensi = fileGambarTerpilih.getName().substring(fileGambarTerpilih.getName().lastIndexOf("."));
-                namaFileGambar = "kamar_" + System.currentTimeMillis() + ekstensi;
-                
-                java.nio.file.Files.copy(fileGambarTerpilih.toPath(), 
-                        java.nio.file.Paths.get(folderTujuan + namaFileGambar), 
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Gagal menyimpan file gambar baru: " + e.getMessage());
-                return;
-            }
-        }
-
-        try {
-            String sql;
-            // Jika ada gambar baru, update juga kolom gambar. Jika tidak, jangan update kolom gambar.
-            if (namaFileGambar != null) {
-                sql = "UPDATE tipe_kamar SET nama_tipe = ?, fasilitas = ?, harga = ?, gambar = ? WHERE id = ?";
-            } else {
-                sql = "UPDATE tipe_kamar SET nama_tipe = ?, fasilitas = ?, harga = ? WHERE id = ?";
-            }
-            
-            Connection conn = (Connection) Koneksi.configDB();
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, txtNamaTipe.getText());
-            pst.setString(2, txtAreaFasilitas.getText());
-            pst.setString(3, txtHarga.getText());
-            
-            if (namaFileGambar != null) {
-                pst.setString(4, namaFileGambar);
-                pst.setString(5, lblIdTipeKamar.getText());
-            } else {
-                pst.setString(4, lblIdTipeKamar.getText());
-            }
-
-            pst.executeUpdate();
+        if (controller.updateTipeKamar(tipe, fileGambarTerpilih)) {
             JOptionPane.showMessageDialog(null, "Data Berhasil Diedit");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal mengedit data: " + e.getMessage());
+            load_table();
+            clear_form();
         }
-        load_table();
-        clear_form();
-    
     }//GEN-LAST:event_btnEditTipeActionPerformed
 
     private void btnHapusTipeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusTipeActionPerformed
-        try {
-            int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data tipe kamar ini?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                String sql = "DELETE FROM tipe_kamar WHERE id = ?";
-                Connection conn = (Connection) Koneksi.configDB();
-                PreparedStatement pst = conn.prepareStatement(sql);
-                pst.setString(1, lblIdTipeKamar.getText());
-                pst.executeUpdate();
+        int id = Integer.parseInt(lblIdTipeKamar.getText());
+        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data tipe kamar ini?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (controller.deleteTipeKamar(id)) {
                 JOptionPane.showMessageDialog(null, "Data Berhasil Dihapus");
+                load_table();
+                clear_form();
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal menghapus data: " + e.getMessage());
         }
-        load_table();
-        clear_form();
     }//GEN-LAST:event_btnHapusTipeActionPerformed
 
     private void btnBersihTipeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBersihTipeActionPerformed

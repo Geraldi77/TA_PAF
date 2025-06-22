@@ -5,6 +5,9 @@
 package view;
 
 import db.Koneksi;
+import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.awt.BorderLayout;
 import java.awt.Image;
 import java.sql.Connection;
@@ -24,7 +27,7 @@ public class UserDashboardForm extends javax.swing.JFrame {
     private model.User currentUser;
 
     public UserDashboardForm(model.User user) {
-        initComponents();
+        initComponents(); 
         this.currentUser = user;
         this.setTitle("Selamat Datang, " + this.currentUser.getNamaLengkap());
         setLocationRelativeTo(null); // Form di tengah layar
@@ -133,6 +136,19 @@ public class UserDashboardForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Silakan pilih tanggal Check-in dan Check-out.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        LocalDate tanggalHarIni= LocalDate.now();
+        LocalDate tanggalPilihan = dateCheckin.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        
+        //cek tanggal perhari ini
+        if (tanggalPilihan.isBefore(tanggalHarIni)){
+        JOptionPane.showMessageDialog(this, "Tanggal tidak valid.", "Pemesanan hanya bisa dilakukan perhari ini atau setelahnya", JOptionPane.ERROR_MESSAGE);
+        return;
+        }
+        
+        //tanggal chck-out harus sebelum tanggal checkin
+     
+        
         if (dateCheckin.getDate().after(dateCheckout.getDate())) {
             JOptionPane.showMessageDialog(this, "Tanggal Check-out harus setelah tanggal Check-in.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;

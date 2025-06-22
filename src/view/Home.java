@@ -1,61 +1,92 @@
 
 package view;
 
-import com.teamdev.jxbrowser.browser.Browser;
-import com.teamdev.jxbrowser.engine.Engine;
+
 import java.awt.Cursor;
+import java.awt.Desktop;
+import java.net.URI;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javax.swing.JOptionPane;
-import java.awt.Desktop;
-import java.net.URI;
+import model.User;
 
 public class Home extends javax.swing.JFrame {
 
+    private User currentUser;
+
     /**
-     * Creates new form Home
+     * Constructor untuk aplikasi saat pertama kali dibuka (mode belum login).
      */
     public Home() {
         initComponents();
-        lbla7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lbla2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        // Mengatur agar form terbuka di tengah layar dan maximized
-        Engine engine = BrowserEngine.getEngine();
-        Browser browser = engine.newBrowser();
+        setupUI();
+        setTampilanLoggedOut();
+    }
+    
+    /**
+     * Constructor untuk user yang sudah berhasil login.
+     */
+    public Home(User user) {
+        initComponents();
+        this.currentUser = user;
+        setupUI();
+        setTampilanLoggedIn(user);
+    }
+    
+    /**
+     * Method terpusat untuk semua pengaturan UI awal.
+     */
+    private void setupUI() {
         this.setLocationRelativeTo(null);
         this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
         
-        // Mengisi pilihan bahasa dan menghapus item default
+        // Atur kursor untuk komponen yang bisa diklik
+        lbla1.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        lbla2.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        lbla7.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnPesan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnMasuk.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Mengisi pilihan bahasa dan mengatur bahasa default
         comboBahasa.removeAllItems();
         comboBahasa.addItem("Bahasa Indonesia");
         comboBahasa.addItem("English");
-        
-        // Mengatur bahasa default saat aplikasi dibuka
-        ubahBahasa("in", "ID");
-        jLabel2.addMouseListener(new java.awt.event.MouseAdapter() {
-        public void mouseClicked(java.awt.event.MouseEvent evt) {
-            // Panggil method khusus saat label diklik
-            openWhatsApp();
-        }
-    });
+        ubahBahasa("in", "ID"); // Set bahasa default
     }
-    
 
-    // Method untuk mengubah bahasa
+    
+    private void setTampilanLoggedIn(User user) {
+        this.currentUser = user;
+        this.btnMasuk.setVisible(false);
+        this.lblSalamPengguna.setText("Halo, " + currentUser.getNamaLengkap());
+        this.lblSalamPengguna.setVisible(true);
+        this.btnLogout.setVisible(true);
+        this.btnPesan.setEnabled(true);
+        this.lbla2.setEnabled(true);
+    }
+
+    /**
+     * Mengubah UI ke mode BELUM LOGIN.
+     */
+    private void setTampilanLoggedOut() {
+        this.currentUser = null;
+        this.btnMasuk.setVisible(true);
+        this.lblSalamPengguna.setVisible(false);
+        this.btnLogout.setVisible(false);
+        this.btnPesan.setEnabled(false);
+        this.lbla2.setEnabled(false);
+    }
+
     private void ubahBahasa(String kodeBahasa, String kodeNegara) {
         try {
-            // Tentukan Locale (bahasa dan negara)
             Locale locale = new Locale(kodeBahasa, kodeNegara);
-            
-            // Muat file properti berdasarkan Locale
-            // Pastikan Anda membuat package "i18n" di dalam package "view"
             ResourceBundle messages = ResourceBundle.getBundle("i18n.messages", locale);
             
-            // Terapkan teks ke setiap komponen
-            lbl4.setText(messages.getString("welcome.s4"));
-            lblLUXURYHOTELEXPERIENCE.setText(messages.getString("welcome.s"));
             lblJudul.setText(messages.getString("welcome.title"));
             lblSubJudul.setText(messages.getString("welcome.subtitle"));
+            lblLUXURYHOTELEXPERIENCE.setText(messages.getString("welcome.s"));
+            lbl4.setText(messages.getString("welcome.s4"));
             btnPesan.setText(messages.getString("welcome.button.book"));
             
             lbla1.setText(messages.getString("welcome.a1"));
@@ -68,28 +99,9 @@ public class Home extends javax.swing.JFrame {
             
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Gagal memuat file bahasa: " + e.getMessage());
-            e.printStackTrace();
         }
-        
     }
-    private void openWhatsApp() {
-    try {
-        // Ganti dengan nomor WhatsApp tujuan Anda (gunakan format internasional tanpa "+")
-        String nomorWhatsApp = "6281316056818"; // Contoh: nomor Indonesia 0812...
-        String url = "https://wa.me/" + nomorWhatsApp;
 
-        // Cek apakah fitur Desktop didukung oleh sistem
-        if (Desktop.isDesktopSupported()) {
-            // Buka browser default dengan URL WhatsApp
-            Desktop.getDesktop().browse(new URI(url));
-        } else {
-            JOptionPane.showMessageDialog(this, "Fitur ini tidak didukung di sistem Anda.");
-        }
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Gagal membuka WhatsApp: " + e.getMessage());
-        e.printStackTrace();
-    }
-}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -115,6 +127,9 @@ public class Home extends javax.swing.JFrame {
         lbla6 = new javax.swing.JLabel();
         comboBahasa = new javax.swing.JComboBox<>();
         jLabel2 = new javax.swing.JLabel();
+        btnMasuk = new javax.swing.JButton();
+        btnLogout = new javax.swing.JButton();
+        lblSalamPengguna = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -220,6 +235,26 @@ public class Home extends javax.swing.JFrame {
         jLabel2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(1430, 760, 70, 50));
 
+        btnMasuk.setText("Login");
+        btnMasuk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMasukActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnMasuk, new org.netbeans.lib.awtextra.AbsoluteConstraints(1380, 140, -1, -1));
+
+        btnLogout.setText("jButton1");
+        btnLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLogoutActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnLogout, new org.netbeans.lib.awtextra.AbsoluteConstraints(1380, 180, -1, -1));
+
+        lblSalamPengguna.setForeground(new java.awt.Color(255, 255, 255));
+        lblSalamPengguna.setText("jLabel3");
+        jPanel1.add(lblSalamPengguna, new org.netbeans.lib.awtextra.AbsoluteConstraints(1270, 180, -1, -1));
+
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setIcon(new javax.swing.ImageIcon("C:\\Users\\User\\Downloads\\Jun 18, 2025, 12_59_46 AM.png")); // NOI18N
@@ -231,17 +266,42 @@ public class Home extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void comboBahasaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboBahasaActionPerformed
-        if (comboBahasa.getSelectedItem() == null) {
+      if (comboBahasa.getSelectedItem() == null) {
             return;
         }
-
         String pilihan = comboBahasa.getSelectedItem().toString();
-
         if (pilihan.equals("English")) {
             ubahBahasa("en", "US");
         } else {
             ubahBahasa("in", "ID");
         }
+        jLabel2.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            // Panggil method khusus saat label diklik
+            openWhatsApp();
+        }
+    });
+    }
+        
+        private void openWhatsApp() {
+    try {
+        // Ganti dengan nomor WhatsApp tujuan Anda (gunakan format internasional tanpa "+")
+        String nomorWhatsApp = "6281316056818"; // Contoh: nomor Indonesia 0812...
+        String url = "https://wa.me/" + nomorWhatsApp;
+
+        // Cek apakah fitur Desktop didukung oleh sistem
+        if (Desktop.isDesktopSupported()) {
+            // Buka browser default dengan URL WhatsApp
+            Desktop.getDesktop().browse(new URI(url));
+        } else {
+            JOptionPane.showMessageDialog(this, "Fitur ini tidak didukung di sistem Anda.");
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Gagal membuka WhatsApp: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+            
     }//GEN-LAST:event_comboBahasaActionPerformed
 
     private void lbla1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbla1MouseClicked
@@ -249,26 +309,43 @@ public class Home extends javax.swing.JFrame {
     }//GEN-LAST:event_lbla1MouseClicked
 
     private void lbla7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbla7MouseClicked
-        Contact formKontak = new Contact();
-    // 2. Tampilkan form Home tersebut
-    formKontak.setVisible(true);
-
-    // 3. Tutup form yang sekarang (Contact)
-    this.dispose();
+       new Contact(this.currentUser).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_lbla7MouseClicked
 
     private void btnPesanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPesanActionPerformed
-        UserDashboardForm formUserDashboard = new UserDashboardForm();
-        formUserDashboard.setVisible(true);
+        new UserDashboardForm(this.currentUser).setVisible(true);
         this.dispose();
+       
     }//GEN-LAST:event_btnPesanActionPerformed
 
     private void lbla2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbla2MouseClicked
-         UserDashboardForm formUserDashboard = new UserDashboardForm();
-        formUserDashboard.setVisible(true);
-
+         new UserDashboardForm(this.currentUser).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_lbla2MouseClicked
+
+    private void btnMasukActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMasukActionPerformed
+           LoginDialog dialog = new LoginDialog(this, true);
+        dialog.setVisible(true);
+        User user = dialog.getAuthenticatedUser();
+        
+        if (user != null) {
+            if ("Admin".equals(user.getRole())) {
+                new AdminDashboardForm().setVisible(true);
+                this.dispose();
+            } else {
+                this.currentUser = user; 
+                setTampilanLoggedIn(user);
+            }
+        }
+    }//GEN-LAST:event_btnMasukActionPerformed
+
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
+        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin logout?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            setTampilanLoggedOut();
+        }
+    }//GEN-LAST:event_btnLogoutActionPerformed
 
     /**
      * @param args the command line arguments
@@ -306,6 +383,8 @@ public class Home extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnLogout;
+    private javax.swing.JButton btnMasuk;
     private javax.swing.JButton btnPesan;
     private javax.swing.JComboBox<String> comboBahasa;
     private javax.swing.JLabel jLabel1;
@@ -314,6 +393,7 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JLabel lbl4;
     private javax.swing.JLabel lblJudul;
     private javax.swing.JLabel lblLUXURYHOTELEXPERIENCE;
+    private javax.swing.JLabel lblSalamPengguna;
     private javax.swing.JLabel lblSubJudul;
     private javax.swing.JLabel lbla1;
     private javax.swing.JLabel lbla2;

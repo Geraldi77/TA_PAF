@@ -1,62 +1,50 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+
 package view;
 
 import com.teamdev.jxbrowser.browser.Browser;
 import com.teamdev.jxbrowser.engine.Engine;
-import com.teamdev.jxbrowser.engine.EngineOptions;
-import static com.teamdev.jxbrowser.engine.RenderingMode.HARDWARE_ACCELERATED;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
 import java.awt.BorderLayout;
-import java.awt.Cursor;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import javax.swing.JOptionPane;
 import java.awt.Desktop;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import model.User;
 
 public class Contact extends javax.swing.JFrame {
 
-    /**
-     * Creates new form Home
-     */
-    public Contact() {
+    private User currentUser;
+
+    public Contact(User user) {
         initComponents();
-        lbla1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.currentUser = user;
+        
+        this.setTitle("Hubungi Kami");
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        this.setLocationRelativeTo(null);
+        this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
+
+        // Panggil Engine dari kelas terpusat
         Engine engine = BrowserEngine.getEngine();
         Browser browser = engine.newBrowser();
-
-        this.setTitle("Tampilan Peta Hotel (Modern)");
-        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                engine.close();
-                BrowserEngine.getEngine().close();
+                browser.close(); // Hanya tutup browser, bukan engine
             }
         });
 
         BrowserView view = BrowserView.newInstance(browser);
-        
-        // --- INI PERBAIKAN UI YANG SANGAT PENTING ---
         panelPetaKontak.setLayout(new BorderLayout());
         panelPetaKontak.add(view, BorderLayout.CENTER);
-
-        this.setSize(1024, 768);
-        this.setLocationRelativeTo(null);
-
-        // Baris ini untuk debugging, boleh dihapus jika sudah berhasil
-        System.out.println("Program mencari file di path: " + Paths.get("map.html").toAbsolutePath().toString());
-
+        
         String mapUrl = Paths.get("map.html").toUri().toString();
         browser.navigation().loadUrl(mapUrl);
         // Mengatur agar form terbuka di tengah layar dan maximized
@@ -78,6 +66,7 @@ public class Contact extends javax.swing.JFrame {
         }
     });
     }
+    
     
 
     // Method untuk mengubah bahasa
@@ -320,12 +309,8 @@ public class Contact extends javax.swing.JFrame {
     }//GEN-LAST:event_comboBahasaActionPerformed
 
     private void lbla1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbla1MouseClicked
-        Home formHome = new Home();
-    // 2. Tampilkan form Home tersebut
-    formHome.setVisible(true);
-
-    // 3. Tutup form yang sekarang (Contact)
-    this.dispose();
+       new Home(this.currentUser).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_lbla1MouseClicked
 
     /**
@@ -335,10 +320,17 @@ public class Contact extends javax.swing.JFrame {
     // Baris ini tetap, karena berlaku global
     System.setProperty("jxbrowser.chromium.switches", "--allow-file-access-from-files");
 
+    // Jalankan di Event Dispatch Thread (EDT) Swing
     SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-            // Pastikan yang dijalankan adalah form Kontak
-            new Contact().setVisible(true);
+            // --- PERBAIKAN DI SINI ---
+            // Buat objek User palsu (dummy) untuk testing
+            User dummyUser = new User();
+            dummyUser.setId(0); // Beri nilai default
+            dummyUser.setNamaLengkap("Guest Tester");
+
+            // Panggil constructor yang benar dengan user dummy
+            new Contact(dummyUser).setVisible(true);
         }
     });
 }

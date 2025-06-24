@@ -219,10 +219,8 @@ public class LaporanForm extends javax.swing.JFrame {
             return;
         }
 
-        // Panggil controller untuk mendapatkan data laporan
         LaporanData laporan = controller.generateLaporan(dateMulai.getDate(), dateSelesai.getDate());
 
-        // Siapkan table model
         DefaultTableModel model = new DefaultTableModel();
         model.addColumn("ID Pesanan");
         model.addColumn("Tamu");
@@ -250,13 +248,10 @@ public class LaporanForm extends javax.swing.JFrame {
         
         tabelLaporan.setModel(model);
         
-        // Tampilkan total pendapatan dari data yang dikembalikan controller
         lblTotalPendapatan.setText(formatRupiah(laporan.getTotalPendapatan()));
         tabelLaporan.setModel(model);
-    lblTotalPendapatan.setText(formatRupiah(laporan.getTotalPendapatan()));
-
-    // Aktifkan tombol ekspor jika ada data di tabel
-    btnExportExcel.setEnabled(model.getRowCount() > 0); 
+        lblTotalPendapatan.setText(formatRupiah(laporan.getTotalPendapatan()));
+        btnExportExcel.setEnabled(model.getRowCount() > 0); 
     }//GEN-LAST:event_btnGenerateActionPerformed
 
     private void btnExportExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportExcelActionPerformed

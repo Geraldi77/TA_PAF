@@ -37,7 +37,7 @@ public class Contact extends javax.swing.JFrame {
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                browser.close(); // Hanya tutup browser, bukan engine
+                browser.close(); 
             }
         });
 
@@ -47,12 +47,10 @@ public class Contact extends javax.swing.JFrame {
         
         String mapUrl = Paths.get("map.html").toUri().toString();
         browser.navigation().loadUrl(mapUrl);
-        // Mengatur agar form terbuka di tengah layar dan maximized
         
         this.setLocationRelativeTo(null);
         this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
         
-        // Mengisi pilihan bahasa dan menghapus item default
         comboBahasa.removeAllItems();
         comboBahasa.addItem("Bahasa Indonesia");
         comboBahasa.addItem("English");
@@ -61,7 +59,6 @@ public class Contact extends javax.swing.JFrame {
         ubahBahasa("in", "ID");
         jLabel2.addMouseListener(new java.awt.event.MouseAdapter() {
         public void mouseClicked(java.awt.event.MouseEvent evt) {
-            // Panggil method khusus saat label diklik
             openWhatsApp();
         }
     });
@@ -72,14 +69,11 @@ public class Contact extends javax.swing.JFrame {
     // Method untuk mengubah bahasa
     private void ubahBahasa(String kodeBahasa, String kodeNegara) {
         try {
-            // Tentukan Locale (bahasa dan negara)
             Locale locale = new Locale(kodeBahasa, kodeNegara);
             
-            // Muat file properti berdasarkan Locale
-            // Pastikan Anda membuat package "i18n" di dalam package "view"
             ResourceBundle messages = ResourceBundle.getBundle("i18n.messages", locale);
             
-            // Terapkan teks ke setiap komponen
+            
             
             lbls1.setText(messages.getString("welcome.s1"));
             lbls2.setText(messages.getString("welcome.s2"));
@@ -88,7 +82,7 @@ public class Contact extends javax.swing.JFrame {
             lbla2.setText(messages.getString("welcome.a2"));
             lbla3.setText(messages.getString("welcome.a3"));
             lbla4.setText(messages.getString("welcome.a4"));
-            lbla5.setText(messages.getString("welcome.a5"));
+            
             lbla6.setText(messages.getString("welcome.a6"));
             lbla7.setText(messages.getString("welcome.a7"));
             
@@ -100,13 +94,10 @@ public class Contact extends javax.swing.JFrame {
     }
     private void openWhatsApp() {
     try {
-        // Ganti dengan nomor WhatsApp tujuan Anda (gunakan format internasional tanpa "+")
-        String nomorWhatsApp = "6281316056818"; // Contoh: nomor Indonesia 0812...
+        String nomorWhatsApp = "6281316056818"; 
         String url = "https://wa.me/" + nomorWhatsApp;
 
-        // Cek apakah fitur Desktop didukung oleh sistem
         if (Desktop.isDesktopSupported()) {
-            // Buka browser default dengan URL WhatsApp
             Desktop.getDesktop().browse(new URI(url));
         } else {
             JOptionPane.showMessageDialog(this, "Fitur ini tidak didukung di sistem Anda.");
@@ -134,7 +125,6 @@ public class Contact extends javax.swing.JFrame {
         lbla3 = new javax.swing.JLabel();
         lbla2 = new javax.swing.JLabel();
         lbla4 = new javax.swing.JLabel();
-        lbla5 = new javax.swing.JLabel();
         lbla6 = new javax.swing.JLabel();
         comboBahasa = new javax.swing.JComboBox<>();
         jLabel2 = new javax.swing.JLabel();
@@ -179,7 +169,7 @@ public class Contact extends javax.swing.JFrame {
         lbla7.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         lbla7.setForeground(new java.awt.Color(255, 255, 255));
         lbla7.setText("Contact");
-        jPanel1.add(lbla7, new org.netbeans.lib.awtextra.AbsoluteConstraints(1250, 90, -1, -1));
+        jPanel1.add(lbla7, new org.netbeans.lib.awtextra.AbsoluteConstraints(1140, 90, -1, -1));
 
         lbla3.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         lbla3.setForeground(new java.awt.Color(255, 255, 255));
@@ -196,15 +186,10 @@ public class Contact extends javax.swing.JFrame {
         lbla4.setText("Facilities");
         jPanel1.add(lbla4, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 90, -1, -1));
 
-        lbla5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        lbla5.setForeground(new java.awt.Color(255, 255, 255));
-        lbla5.setText("Promotion");
-        jPanel1.add(lbla5, new org.netbeans.lib.awtextra.AbsoluteConstraints(970, 90, -1, -1));
-
         lbla6.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         lbla6.setForeground(new java.awt.Color(255, 255, 255));
         lbla6.setText("Activity & Gallery");
-        jPanel1.add(lbla6, new org.netbeans.lib.awtextra.AbsoluteConstraints(1070, 90, -1, -1));
+        jPanel1.add(lbla6, new org.netbeans.lib.awtextra.AbsoluteConstraints(960, 90, -1, -1));
 
         comboBahasa.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         comboBahasa.addActionListener(new java.awt.event.ActionListener() {
@@ -309,27 +294,27 @@ public class Contact extends javax.swing.JFrame {
     }//GEN-LAST:event_comboBahasaActionPerformed
 
     private void lbla1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbla1MouseClicked
-       new Home(this.currentUser).setVisible(true);
-        this.dispose();
+         if (this.currentUser != null) {
+        new Home(this.currentUser).setVisible(true);
+    } else {
+        new Home().setVisible(true);
+    }
+    this.dispose();
+                
     }//GEN-LAST:event_lbla1MouseClicked
 
     /**
      * @param args the command line arguments
      */
    public static void main(String[] args) {
-    // Baris ini tetap, karena berlaku global
     System.setProperty("jxbrowser.chromium.switches", "--allow-file-access-from-files");
 
-    // Jalankan di Event Dispatch Thread (EDT) Swing
     SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-            // --- PERBAIKAN DI SINI ---
-            // Buat objek User palsu (dummy) untuk testing
             User dummyUser = new User();
-            dummyUser.setId(0); // Beri nilai default
+            dummyUser.setId(0); 
             dummyUser.setNamaLengkap("Guest Tester");
 
-            // Panggil constructor yang benar dengan user dummy
             new Contact(dummyUser).setVisible(true);
         }
     });
@@ -353,7 +338,6 @@ public class Contact extends javax.swing.JFrame {
     private javax.swing.JLabel lbla2;
     private javax.swing.JLabel lbla3;
     private javax.swing.JLabel lbla4;
-    private javax.swing.JLabel lbla5;
     private javax.swing.JLabel lbla6;
     private javax.swing.JLabel lbla7;
     private javax.swing.JLabel lbls1;

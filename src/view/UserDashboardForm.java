@@ -9,6 +9,7 @@ import java.util.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Image;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -21,6 +22,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import java.sql.PreparedStatement;
+import javax.swing.Box;
 
 public class UserDashboardForm extends javax.swing.JFrame {
     
@@ -31,9 +33,10 @@ public class UserDashboardForm extends javax.swing.JFrame {
         this.currentUser = user;
         this.setTitle("Selamat Datang, " + this.currentUser.getNamaLengkap());
         setLocationRelativeTo(null); // Form di tengah layar
-        
+         Date hariIni = new Date();
+    dateCheckin.setSelectableDateRange(hariIni, null);
+    dateCheckout.setSelectableDateRange(hariIni, null);
         loadTipeKamarFilter();
-        // Trigger pencarian awal untuk menampilkan semua kamar tersedia
         btnCari.doClick(); 
     }
     
@@ -49,8 +52,8 @@ public class UserDashboardForm extends javax.swing.JFrame {
 
             if (fileGambar.exists()) {
                 ImageIcon icon = new ImageIcon(fileGambar.getAbsolutePath());
-                int width = 250;
-                int height = 180;
+                int width = 300;
+                int height = 500;
                 Image img = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
                 
                 label.setIcon(new ImageIcon(img));
@@ -86,49 +89,67 @@ public class UserDashboardForm extends javax.swing.JFrame {
                     panelHasil.setLayout(new java.awt.GridLayout(0, 3, 15, 15));
                     while (res.next()) {
                         javax.swing.JPanel kartuKamar = new javax.swing.JPanel();
-                        kartuKamar.setLayout(new javax.swing.BoxLayout(kartuKamar, javax.swing.BoxLayout.Y_AXIS));
-                        kartuKamar.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-                        kartuKamar.setBackground(new java.awt.Color(255, 255, 255));
+            kartuKamar.setLayout(new javax.swing.BoxLayout(kartuKamar, javax.swing.BoxLayout.Y_AXIS));
+            kartuKamar.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+            kartuKamar.setBackground(new java.awt.Color(255, 255, 255));
 
-                        JLabel lblGambar = new JLabel();
-                        lblGambar.setPreferredSize(new java.awt.Dimension(250, 180));
-                        lblGambar.setHorizontalAlignment(JLabel.CENTER);
-                        String namaFileGambar = res.getString("gambar");
-                        setImageToLabel(namaFileGambar, lblGambar);
+            JLabel lblGambar = new JLabel();
+            String namaFileGambar = res.getString("gambar");
+            setImageToLabel(namaFileGambar, lblGambar);
+            lblGambar.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                        JLabel lblNamaTipe = new JLabel("  " + res.getString("nama_tipe"));
-                        lblNamaTipe.setFont(new java.awt.Font("Segoe UI", 1, 18));
+            JLabel lblNamaTipe = new JLabel(res.getString("nama_tipe"));
+            lblNamaTipe.setFont(new java.awt.Font("Segoe UI", 1, 18));
+            lblNamaTipe.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 10, 0, 10));
+            lblNamaTipe.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                        javax.swing.JTextArea txtAreaFasilitas = new javax.swing.JTextArea("  Fasilitas: " + res.getString("fasilitas"));
-                        txtAreaFasilitas.setWrapStyleWord(true);
-                        txtAreaFasilitas.setLineWrap(true);
-                        txtAreaFasilitas.setEditable(false);
-                        txtAreaFasilitas.setOpaque(false);
+            javax.swing.JTextArea txtAreaFasilitas = new javax.swing.JTextArea("Fasilitas: " + res.getString("fasilitas"));
+            txtAreaFasilitas.setWrapStyleWord(true);
+            txtAreaFasilitas.setLineWrap(true);
+            txtAreaFasilitas.setEditable(false);
+            txtAreaFasilitas.setOpaque(false);
+            txtAreaFasilitas.setFont(new java.awt.Font("Segoe UI", 0, 12));
+            txtAreaFasilitas.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 10, 0, 10));
+            txtAreaFasilitas.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                        JLabel lblHarga = new JLabel("  Rp " + res.getString("harga") + " / malam");
-                        lblHarga.setFont(new java.awt.Font("Segoe UI", 1, 14));
+            txtAreaFasilitas.setMaximumSize(txtAreaFasilitas.getPreferredSize());
 
-                        javax.swing.JButton btnPesan = new javax.swing.JButton("Pesan Sekarang");
-                        final String idKamar = res.getString("id");
-                        btnPesan.addActionListener(evt -> prosesPemesanan(idKamar));
+            JLabel lblHarga = new JLabel("Rp " + res.getString("harga") + " / malam");
+            lblHarga.setFont(new java.awt.Font("Segoe UI", 1, 14));
+            lblHarga.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 5, 10));
+            lblHarga.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                        kartuKamar.add(lblGambar);
-                        kartuKamar.add(lblNamaTipe);
-                        kartuKamar.add(txtAreaFasilitas);
-                        kartuKamar.add(lblHarga);
-                        kartuKamar.add(btnPesan);
+            javax.swing.JButton btnPesan = new javax.swing.JButton("Pesan Sekarang");
+            btnPesan.setAlignmentX(Component.LEFT_ALIGNMENT);
+            final String idKamar = res.getString("id");
+            btnPesan.addActionListener(evt -> prosesPemesanan(idKamar));
 
-                        panelHasil.add(kartuKamar);
+            javax.swing.JPanel panelTombol = new javax.swing.JPanel(new BorderLayout());
+            panelTombol.setOpaque(false);
+            panelTombol.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 8, 0));
+            panelTombol.add(btnPesan, BorderLayout.WEST);
+            panelTombol.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panelTombol.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, panelTombol.getPreferredSize().height));
+
+
+            kartuKamar.add(lblGambar);
+            kartuKamar.add(lblNamaTipe);
+            kartuKamar.add(txtAreaFasilitas);
+            kartuKamar.add(Box.createVerticalGlue()); 
+            kartuKamar.add(lblHarga);
+            kartuKamar.add(panelTombol); 
+
+            panelHasil.add(kartuKamar);
+                            }
+                        }
                     }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Gagal menampilkan kamar: " + e.getMessage());
+                    e.printStackTrace();
                 }
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Gagal menampilkan kamar: " + e.getMessage());
-            e.printStackTrace();
-        }
         
-        panelHasil.revalidate();
-        panelHasil.repaint();
+            panelHasil.revalidate();
+            panelHasil.repaint();
     }
     
     private void prosesPemesanan(String idKamar) {
@@ -140,14 +161,11 @@ public class UserDashboardForm extends javax.swing.JFrame {
         LocalDate tanggalHarIni= LocalDate.now();
         LocalDate tanggalPilihan = dateCheckin.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         
-        //cek tanggal perhari ini
         if (tanggalPilihan.isBefore(tanggalHarIni)){
         JOptionPane.showMessageDialog(this, "Tanggal tidak valid.", "Pemesanan hanya bisa dilakukan perhari ini atau setelahnya", JOptionPane.ERROR_MESSAGE);
         return;
         }
         
-        //tanggal chck-out harus sebelum tanggal checkin
-     
         
         if (dateCheckin.getDate().after(dateCheckout.getDate())) {
             JOptionPane.showMessageDialog(this, "Tanggal Check-out harus setelah tanggal Check-in.", "Peringatan", JOptionPane.WARNING_MESSAGE);
@@ -187,7 +205,7 @@ public class UserDashboardForm extends javax.swing.JFrame {
                 conn.commit();
 
                 String subjekEmail = "Konfirmasi Pemesanan Hotel - ID #" + idPemesananBaru;
-                String isiEmail = "Halo " + this.currentUser.getNamaLengkap() + ",\n\nPemesanan Anda telah kami terima.\n\nDetail:\nID Pesanan: " + idPemesananBaru + "\nCheck-in: " + sdf.format(dateCheckin.getDate()) + "\nCheck-out: " + sdf.format(dateCheckout.getDate()) + "\n\nStatus: Menunggu Pembayaran.";
+                String isiEmail = "Halo " + this.currentUser.getNamaLengkap() + ",\n\nPemesanan Anda telah kami terima.\n\nDetail:\nID Pesanan: " + idPemesananBaru + "\nCheck-in: " + sdf.format(dateCheckin.getDate()) + "\nCheck-out: " + sdf.format(dateCheckout.getDate()) + "\n\nStatus: Silakan Tranfer bank papua norek 12345.";
                 
                 if (this.currentUser.getEmail() != null && !this.currentUser.getEmail().isEmpty()) {
                     util.EmailService.kirimStruk(this.currentUser.getEmail(), subjekEmail, isiEmail);
@@ -222,7 +240,7 @@ public class UserDashboardForm extends javax.swing.JFrame {
              ResultSet res = stm.executeQuery("SELECT nama_tipe FROM tipe_kamar GROUP BY nama_tipe ORDER BY nama_tipe ASC")) {
             
             comboTipeFilter.removeAllItems();
-            comboTipeFilter.addItem("Semua Tipe"); // Opsi default
+            comboTipeFilter.addItem("Semua Tipe"); 
             while(res.next()){
                 comboTipeFilter.addItem(res.getString("nama_tipe"));
             }

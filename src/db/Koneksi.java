@@ -14,9 +14,9 @@ public class Koneksi {
     
     public static Connection configDB() throws SQLException {
         try {
-            String url = "jdbc:mysql://localhost:3306/db_stayeasy"; // URL database
-            String user = "root"; // user database
-            String pass = ""; // password database
+            String url = "jdbc:mysql://localhost:3306/db_stayeasy"; 
+            String user = "root"; 
+            String pass = ""; 
             
             DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
             mysqlconfig = DriverManager.getConnection(url, user, pass);

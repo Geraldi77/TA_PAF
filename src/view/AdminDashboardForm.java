@@ -94,7 +94,6 @@ private void loadStatistikTipeKamar() {
 // Method untuk mengambil data total reservasi
 private void loadStatistikTotalReservasi() {
     try {
-        // Query DIUBAH untuk menggunakan 'tanggal_checkin'
         String sql = "SELECT COUNT(*) AS jumlah FROM pemesanan WHERE MONTH(tanggal_checkin) = MONTH(CURRENT_DATE()) AND YEAR(tanggal_checkin) = YEAR(CURRENT_DATE())";
         
         java.sql.Connection conn = Koneksi.configDB();
@@ -103,13 +102,14 @@ private void loadStatistikTotalReservasi() {
         if (res.next()) {
             lblAngkaTotalReservasi.setText(res.getString("jumlah"));
         }
-        lblTeksTotalReservasi.setText("Check-in Bulan Ini"); // Teksnya juga kita sesuaikan
+        lblTeksTotalReservasi.setText("Check-in Bulan Ini"); 
     } catch (Exception e) {
         lblAngkaTotalReservasi.setText("N/A");
     }
 }
     public AdminDashboardForm() {
         initComponents();
+        //metode untuk memuat data dari database
         loadStatistikKamarTersedia();
         loadStatistikKamarDipesan();
         loadTabelReservasi();
@@ -519,13 +519,9 @@ private void loadStatistikTotalReservasi() {
         "Apakah Anda yakin ingin logout?", 
         "Konfirmasi Logout", 
         JOptionPane.YES_NO_OPTION);
-
-    // 2. Cek apakah pengguna menekan tombol "Yes"
-    if (confirm == JOptionPane.YES_OPTION) {
-        // 3. Buka kembali jendela login
-        new LoginForm().setVisible(true);
         
-        // 4. Tutup jendela dashboard saat ini
+        if (confirm == JOptionPane.YES_OPTION) {
+        new LoginForm().setVisible(true);
         this.dispose();
     }
     }//GEN-LAST:event_jButton2ActionPerformed

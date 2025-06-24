@@ -39,7 +39,6 @@ public class LaporanController {
             try (ResultSet res = pst.executeQuery()) {
                 while (res.next()) {
                     long harga = res.getLong("tk.harga");
-                    // Pastikan jumlah malam tidak 0 untuk menghindari pembagian dengan nol atau subtotal aneh
                     int jumlahMalam = res.getInt("jumlah_malam") == 0 ? 1 : res.getInt("jumlah_malam");
                     long subtotal = harga * jumlahMalam;
                     totalPendapatan += subtotal;
@@ -54,7 +53,7 @@ public class LaporanController {
                     Pemesanan p = new Pemesanan();
                     p.setId(res.getInt("p.id"));
                     p.setTanggalCheckin(res.getDate("p.tanggal_checkin"));
-                    p.setTanggalCheckout(res.getDate("p.tanggal_checkout")); // <-- BARIS YANG HILANG, SEKARANG DITAMBAHKAN
+                    p.setTanggalCheckout(res.getDate("p.tanggal_checkout")); 
                     p.setUser(user);
                     p.setKamar(new Kamar());
                     p.getKamar().setTipeKamar(tipe);

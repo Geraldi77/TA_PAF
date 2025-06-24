@@ -20,17 +20,15 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class ExcelExporter {
 
     public static void exportToExcel(JTable table, JFrame parent) {
-        // Minta pengguna memilih lokasi dan nama file
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Simpan Laporan sebagai File Excel");
         fileChooser.setFileFilter(new FileNameExtensionFilter("File Excel (*.xlsx)", "xlsx"));
         
         int userSelection = fileChooser.showSaveDialog(parent);
         if (userSelection != JFileChooser.APPROVE_OPTION) {
-            return; // Batalkan jika pengguna tidak memilih file
+            return; 
         }
         
-        // Pastikan nama file berakhiran .xlsx
         String filePath = fileChooser.getSelectedFile().getAbsolutePath();
         if (!filePath.toLowerCase().endsWith(".xlsx")) {
             filePath += ".xlsx";
@@ -40,14 +38,12 @@ public class ExcelExporter {
             XSSFSheet sheet = workbook.createSheet("Laporan Pendapatan");
             TableModel model = table.getModel();
 
-            // 1. Buat Header
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < model.getColumnCount(); i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(model.getColumnName(i));
             }
 
-            // 2. Tulis Data Baris
             for (int i = 0; i < model.getRowCount(); i++) {
                 Row row = sheet.createRow(i + 1);
                 for (int j = 0; j < model.getColumnCount(); j++) {
@@ -57,12 +53,10 @@ public class ExcelExporter {
                 }
             }
             
-            // Atur lebar kolom agar sesuai dengan konten
             for (int i = 0; i < model.getColumnCount(); i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // 3. Tulis ke File
             try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
                 workbook.write(outputStream);
             }

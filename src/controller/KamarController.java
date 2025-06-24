@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package controller;
 
 
@@ -20,7 +17,6 @@ import model.TipeKamar;
 
 public class KamarController {
 
-    // Method untuk mengambil semua data kamar (dengan data tipe kamar)
     public List<Kamar> getAllKamar() {
         List<Kamar> kamarList = new ArrayList<>();
         String sql = "SELECT k.id AS id_kamar, k.nomor_kamar, k.status, " +
@@ -52,9 +48,9 @@ public class KamarController {
         return kamarList;
     }
 
-    // Method untuk mengambil daftar tipe kamar dalam bentuk Map (Nama Tipe -> ID)
+    // Method untuk mengambil daftar tipe kamar dalam bentuk Map
     public Map<String, Integer> getTipeKamarMap() {
-        Map<String, Integer> tipeKamarMap = new LinkedHashMap<>(); // LinkedHashMap menjaga urutan
+        Map<String, Integer> tipeKamarMap = new LinkedHashMap<>(); 
         String sql = "SELECT id, nama_tipe FROM tipe_kamar ORDER BY nama_tipe ASC";
 
         try (Connection conn = Koneksi.configDB();

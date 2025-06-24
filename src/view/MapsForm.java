@@ -34,14 +34,12 @@ public class MapsForm extends JFrame {
 
         BrowserView view = BrowserView.newInstance(browser);
         
-        // --- INI PERBAIKAN UI YANG SANGAT PENTING ---
         panelPeta.setLayout(new BorderLayout());
         panelPeta.add(view, BorderLayout.CENTER);
 
         this.setSize(1024, 768);
         this.setLocationRelativeTo(null);
 
-        // Baris ini untuk debugging, boleh dihapus jika sudah berhasil
         System.out.println("Program mencari file di path: " + Paths.get("map.html").toAbsolutePath().toString());
 
         String mapUrl = Paths.get("map.html").toUri().toString();
@@ -88,10 +86,8 @@ public class MapsForm extends JFrame {
 
         System.setProperty("jxbrowser.chromium.switches", "--allow-file-access-from-files");
 
-        // Jalankan aplikasi di Event Dispatch Thread (EDT) Swing untuk keamanan thread
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                // Buat instance dari form dan tampilkan
                 new MapsForm().setVisible(true);
             }
         });

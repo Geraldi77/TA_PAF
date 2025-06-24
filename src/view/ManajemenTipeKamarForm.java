@@ -380,27 +380,23 @@ public class ManajemenTipeKamarForm extends javax.swing.JFrame {
         String harga = tabelTipeKamar.getValueAt(baris, 3).toString().replace("Rp ", "");
         txtHarga.setText(harga);
 
-        // Ambil nama file gambar dari tabel dan tampilkan preview-nya
         Object namaFileObj = tabelTipeKamar.getValueAt(baris, 4);
         String namaFileGambar = (namaFileObj == null) ? null : namaFileObj.toString();
         displayImage(namaFileGambar);
         
-        fileGambarTerpilih = null; // Reset pilihan file saat memilih dari tabel
+        fileGambarTerpilih = null;
     
 
     }//GEN-LAST:event_tabelTipeKamarMouseClicked
 
     private void btnPilihGambarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPilihGambarActionPerformed
         JFileChooser fileChooser = new JFileChooser();
-    // Filter agar hanya file gambar yang bisa dipilih
     fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Image Files", "jpg", "png", "gif", "jpeg"));
     
     int result = fileChooser.showOpenDialog(this);
     if (result == JFileChooser.APPROVE_OPTION) {
-        // Simpan file yang dipilih ke variabel global
         fileGambarTerpilih = fileChooser.getSelectedFile();
         
-        // Tampilkan preview gambar di JLabel
         try {
             ImageIcon icon = new ImageIcon(fileGambarTerpilih.getAbsolutePath());
             Image img = icon.getImage().getScaledInstance(lblPreviewGambar.getWidth(), lblPreviewGambar.getHeight(), Image.SCALE_SMOOTH);

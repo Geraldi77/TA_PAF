@@ -14,17 +14,16 @@ public class EmailService {
 
     public static void kirimStruk(String emailTujuan, String subjek, String isiEmail) {
         // --- KONFIGURASI PENGIRIM ---
-        final String emailPengirim = "geralsnduk@gmail.com"; // Ganti dengan email Gmail Anda
-        final String passwordPengirim = "npip kxdg pvyp obtj"; // Ganti dengan 16 karakter App Password dari Google
+        final String emailPengirim = "geralsnduk@gmail.com"; 
+        final String passwordPengirim = "npip kxdg pvyp obtj"; 
 
-        // --- PROPERTI KONEKSI GMAIL ---
+        
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
 
-        // --- SESI AUTENTIKASI ---
         Authenticator auth = new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {

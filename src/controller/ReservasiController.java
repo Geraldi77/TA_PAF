@@ -83,9 +83,7 @@ public class ReservasiController {
         Connection conn = null;
         try {
             conn = Koneksi.configDB();
-            conn.setAutoCommit(false); // Memulai transaksi
-
-            // 1. Ambil dulu id_kamar dari pemesanan yang akan dihapus
+            conn.setAutoCommit(false); 
             int idKamar = 0;
             String sqlGetKamar = "SELECT id_kamar FROM pemesanan WHERE id = ?";
             try (PreparedStatement pstGet = conn.prepareStatement(sqlGetKamar)) {
@@ -100,27 +98,26 @@ public class ReservasiController {
                 throw new Exception("Kamar untuk reservasi ini tidak ditemukan.");
             }
 
-            // 2. Hapus data pemesanan
+            
             String sqlDelete = "DELETE FROM pemesanan WHERE id = ?";
             try (PreparedStatement pstDelete = conn.prepareStatement(sqlDelete)) {
                 pstDelete.setInt(1, idPemesanan);
                 pstDelete.executeUpdate();
             }
 
-            // 3. Update status kamar kembali menjadi 'Tersedia'
             String sqlUpdateKamar = "UPDATE kamar SET status = 'Tersedia' WHERE id = ?";
             try (PreparedStatement pstUpdate = conn.prepareStatement(sqlUpdateKamar)) {
                 pstUpdate.setInt(1, idKamar);
                 pstUpdate.executeUpdate();
             }
 
-            conn.commit(); // Simpan semua perubahan jika berhasil
+            conn.commit(); 
             return true;
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Gagal menghapus reservasi: " + e.getMessage());
             try {
-                if (conn != null) conn.rollback(); // Batalkan semua perubahan jika ada error
+                if (conn != null) conn.rollback(); 
             } catch (SQLException ex) {
                 System.err.println("Rollback gagal: " + ex.getMessage());
             }

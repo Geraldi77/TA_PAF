@@ -4,21 +4,21 @@
  */
 package view;
 
-import controller.UserController; // Import controller
+import controller.UserController; 
 import java.awt.Color;
 import java.awt.Font;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import model.User; // Import model
+import model.User; 
 
 public class ManajemenUserForm extends javax.swing.JFrame {
 
-    private final UserController userController; // Deklarasikan controller
+    private final UserController userController; 
 
     public ManajemenUserForm() {
         initComponents();
-        this.userController = new UserController(); // Inisialisasi controller
+        this.userController = new UserController();
         
         // Pengaturan UI lainnya
         setLocationRelativeTo(null);
@@ -35,7 +35,6 @@ public class ManajemenUserForm extends javax.swing.JFrame {
         lblIdUser.setVisible(false);
     }
     
-    // VIEW HANYA MEMANGGIL CONTROLLER, TIDAK ADA SQL DI SINI
     private void load_table() {
         DefaultTableModel model = new DefaultTableModel();
         model.addColumn("ID");
@@ -44,10 +43,8 @@ public class ManajemenUserForm extends javax.swing.JFrame {
         model.addColumn("Username");
         model.addColumn("Role");
         
-        // Panggil method controller untuk mendapatkan data
         List<User> users = userController.getAllUsers();
         
-        // Loop data dari controller, bukan dari ResultSet
         for (User user : users) {
             model.addRow(new Object[]{
                 user.getId(),

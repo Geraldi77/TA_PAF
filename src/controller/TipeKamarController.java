@@ -48,7 +48,6 @@ public class TipeKamarController {
         String namaFileGambar = null;
         if (fileGambar != null) {
             try {
-                // Proses dan salin gambar
                 String folderTujuan = System.getProperty("user.dir") + "/app_images/";
                 File folder = new File(folderTujuan);
                 if (!folder.exists()) {
@@ -71,7 +70,7 @@ public class TipeKamarController {
             pst.setString(1, tipe.getNamaTipe());
             pst.setString(2, tipe.getFasilitas());
             pst.setInt(3, tipe.getHarga());
-            pst.setString(4, tipe.getGambar()); // Nama file baru atau null
+            pst.setString(4, tipe.getGambar()); 
             pst.execute();
             return true;
         } catch (Exception e) {
@@ -85,7 +84,6 @@ public class TipeKamarController {
         String namaFileGambar = null;
         if (fileGambar != null) {
             try {
-                // Logika menyalin file sama seperti saat simpan
                 String folderTujuan = System.getProperty("user.dir") + "/app_images/";
                 File folder = new File(folderTujuan);
                 if (!folder.exists()) folder.mkdirs();
@@ -102,7 +100,6 @@ public class TipeKamarController {
         // Update data di database
         try {
             String sql;
-            // Jika ada gambar baru, update kolom gambar. Jika tidak, jangan.
             if (namaFileGambar != null) {
                 sql = "UPDATE tipe_kamar SET nama_tipe = ?, fasilitas = ?, harga = ?, gambar = ? WHERE id = ?";
             } else {

@@ -1,12 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+
 package view;
 
 import controller.KamarController;
+import db.Koneksi;
 import java.awt.Color;
 import java.awt.Font;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
@@ -16,23 +15,44 @@ import model.Kamar;
 public class ManajemenKamarForm extends javax.swing.JFrame {
 
     private final KamarController controller;
-    private Map<String, Integer> tipeKamarMap; // Untuk menyimpan map Nama Tipe -> ID
+    private Map<String, Integer> tipeKamarMap; 
 
     public ManajemenKamarForm() {
         initComponents();
         this.controller = new KamarController();
+        setLocationRelativeTo(null);
         
-        // Pengaturan UI
+        
         tabelKamar.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabelKamar.getTableHeader().setBackground(new Color(0, 51, 102));
         tabelKamar.getTableHeader().setForeground(new Color(255, 255, 255));
     
-        // Inisialisasi data
+        comboStatus.removeAllItems();
+        comboStatus.addItem("Tersedia");
+        comboStatus.addItem("Dipesan");
+        comboStatus.addItem("Perbaikan");
+
         load_tipe_kamar();
         load_table();
         clear_form();
     }
 
+    private boolean cekNomorKamarDuplikat(String nomorKamar) {
+        try (java.sql.Connection conn = Koneksi.configDB()) {
+            String sql = "SELECT COUNT(*) FROM kamar WHERE nomor_kamar = ?";
+            java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setString(1, nomorKamar); 
+
+            java.sql.ResultSet res = pst.executeQuery();
+            if (res.next()) {
+                return res.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Gagal melakukan pengecekan duplikasi: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
     private void load_table() {
         DefaultTableModel model = new DefaultTableModel();
         model.addColumn("No. Kamar");
@@ -43,7 +63,7 @@ public class ManajemenKamarForm extends javax.swing.JFrame {
         for (Kamar kamar : kamarList) {
             model.addRow(new Object[]{
                 kamar.getNomorKamar(),
-                kamar.getTipeKamar().getNamaTipe(), // Ambil nama tipe dari objek join
+                kamar.getTipeKamar().getNamaTipe(),
                 kamar.getStatus()
             });
         }
@@ -60,16 +80,12 @@ public class ManajemenKamarForm extends javax.swing.JFrame {
 
     private void clear_form() {
         txtNomorKamar.setText("");
-        if (comboTipeKamar.getItemCount() > 0) {
-            comboTipeKamar.setSelectedIndex(0);
-        }
-        comboStatus.setSelectedIndex(0);
+        if (comboTipeKamar.getItemCount() > 0) comboTipeKamar.setSelectedIndex(0);
+        if (comboStatus.getItemCount() > 0) comboStatus.setSelectedIndex(0);
         txtNomorKamar.setEditable(true);
         lblIdKamar.setVisible(false);
     }
-
-
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -292,23 +308,35 @@ public class ManajemenKamarForm extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
+         String nomorKamar = txtNomorKamar.getText().trim();
+
+        if (nomorKamar.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nomor Kamar tidak boleh kosong!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return; 
+        }
+
+        if (cekNomorKamarDuplikat(nomorKamar)) {
+            JOptionPane.showMessageDialog(this, "Nomor Kamar '" + nomorKamar + "' sudah terdaftar. Silakan gunakan nomor lain.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            return; 
+        }
+       
         String namaTipePilihan = comboTipeKamar.getSelectedItem().toString();
         int idTipeKamar = tipeKamarMap.get(namaTipePilihan);
         
         Kamar kamar = new Kamar();
-        kamar.setNomorKamar(txtNomorKamar.getText());
+        kamar.setNomorKamar(nomorKamar); 
         kamar.setIdTipeKamar(idTipeKamar);
         kamar.setStatus(comboStatus.getSelectedItem().toString());
 
         if (controller.saveKamar(kamar)) {
-            JOptionPane.showMessageDialog(null, "Data Kamar Berhasil Disimpan");
+            JOptionPane.showMessageDialog(this, "Data Kamar Berhasil Disimpan", "Sukses", JOptionPane.INFORMATION_MESSAGE);
             load_table();
             clear_form();
         }
     }//GEN-LAST:event_btnSimpanActionPerformed
 
     private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
-        String namaTipePilihan = comboTipeKamar.getSelectedItem().toString();
+         String namaTipePilihan = comboTipeKamar.getSelectedItem().toString();
         int idTipeKamar = tipeKamarMap.get(namaTipePilihan);
         
         Kamar kamar = new Kamar();
@@ -317,7 +345,7 @@ public class ManajemenKamarForm extends javax.swing.JFrame {
         kamar.setStatus(comboStatus.getSelectedItem().toString());
 
         if (controller.updateKamar(kamar)) {
-            JOptionPane.showMessageDialog(null, "Data Berhasil Diedit");
+            JOptionPane.showMessageDialog(this, "Data Berhasil Diedit", "Sukses", JOptionPane.INFORMATION_MESSAGE);
             load_table();
             clear_form();
         }
@@ -329,12 +357,12 @@ public class ManajemenKamarForm extends javax.swing.JFrame {
         
         if (confirm == JOptionPane.YES_OPTION) {
             if (controller.deleteKamar(nomorKamar)) {
-                JOptionPane.showMessageDialog(null, "Data Berhasil Dihapus");
+                JOptionPane.showMessageDialog(this, "Data Berhasil Dihapus", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 load_table();
                 clear_form();
             }
         }
-    
+
     }//GEN-LAST:event_btnHapusActionPerformed
 
     private void btnBersihActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBersihActionPerformed
@@ -342,19 +370,18 @@ public class ManajemenKamarForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBersihActionPerformed
 
     private void tabelKamarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelKamarMouseClicked
-   int baris = tabelKamar.rowAtPoint(evt.getPoint());
+           int baris = tabelKamar.rowAtPoint(evt.getPoint());
+        if (baris < 0) return; 
+
         String nomor = tabelKamar.getValueAt(baris, 0).toString();
         String tipe = tabelKamar.getValueAt(baris, 1).toString();
         String status = tabelKamar.getValueAt(baris, 2).toString();
 
-        // Masukkan data ke form
         txtNomorKamar.setText(nomor);
         comboTipeKamar.setSelectedItem(tipe);
         comboStatus.setSelectedItem(status);
         
-        // Buat nomor kamar tidak bisa diedit saat mode edit
         txtNomorKamar.setEditable(false);
-
     }//GEN-LAST:event_tabelKamarMouseClicked
 
     /**
